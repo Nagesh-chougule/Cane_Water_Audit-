@@ -1,0 +1,1423 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Cane Water Audit (Copy)</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: sticky header with scrolling tab strip; each tab is a 12-column grid of audit sheets. Water = blue accent; semantic good/warn/crit kept separate. */
+:root{
+  --bg:#F1F4F5;--surface:#FFFFFF;--surface2:#E8EDEF;--line:#D2DADE;--fg:#14242C;--muted:#566872;
+  --accent:#1B5E8C;--accent-ink:#FFFFFF;--accent-soft:#DAE9F3;
+  --good:#23703F;--good-bg:#DCEFE2;--warn:#8F5A06;--warn-bg:#FAEACA;--crit:#A92B24;--crit-bg:#F8DAD7;
+  --c1:#2B6CB0;--c2:#9A6B3A;--c3:#2F9597;--c4:#7C6FB0;--c5:#3A8C58;--c6:#C9811C;--c7:#85509E;--c8:#5F7F8E;--c9:#B04444;--c10:#97A3AA;
+  --f-head:'Archivo','Arial Narrow',system-ui,sans-serif;--f-body:'IBM Plex Sans',system-ui,-apple-system,sans-serif;--f-mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0E171B;--surface:#152127;--surface2:#1D2C33;--line:#2B3C45;--fg:#E3ECEF;--muted:#92A5AE;
+  --accent:#6DB2E2;--accent-ink:#0B1A22;--accent-soft:#1A3345;
+  --good:#62C48B;--good-bg:#173626;--warn:#E5B552;--warn-bg:#3B2E12;--crit:#F28A80;--crit-bg:#44201D;
+  --c1:#5B9BE0;--c2:#C79A62;--c3:#4DBDBF;--c4:#9D92D4;--c5:#5DBB80;--c6:#E5A24A;--c7:#B382CB;--c8:#8FAEBB;--c9:#E27272;--c10:#6D7B83;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E171B;--surface:#152127;--surface2:#1D2C33;--line:#2B3C45;--fg:#E3ECEF;--muted:#92A5AE;
+  --accent:#6DB2E2;--accent-ink:#0B1A22;--accent-soft:#1A3345;
+  --good:#62C48B;--good-bg:#173626;--warn:#E5B552;--warn-bg:#3B2E12;--crit:#F28A80;--crit-bg:#44201D;
+  --c1:#5B9BE0;--c2:#C79A62;--c3:#4DBDBF;--c4:#9D92D4;--c5:#5DBB80;--c6:#E5A24A;--c7:#B382CB;--c8:#8FAEBB;--c9:#E27272;--c10:#6D7B83;color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:400 14px/1.5 var(--f-body);padding-inline:max(16px,env(safe-area-inset-left,0px)) max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+h1,h2,h3{font-family:var(--f-head);margin:0;text-wrap:balance}
+h2{font-size:17px;font-weight:700;letter-spacing:-.005em}
+h3{font-size:14px;font-weight:700}
+p{margin:0}
+.wrap{max-width:1180px;margin:0 auto}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}.seg button{border:0;border-radius:0;background:var(--bg);color:var(--fg);padding:6px 10px;font-size:13px}.seg button[aria-pressed=true]{background:var(--accent,#1B6E8F);color:#fff}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--bg);padding-top:14px;border-bottom:1px solid var(--line)}
+.brandrow{display:flex;flex-wrap:wrap;gap:10px 24px;align-items:flex-end;justify-content:space-between}
+h1{font-size:23px;font-weight:700;letter-spacing:-.015em}
+.sub{color:var(--muted);font-size:13px;margin-top:2px}
+.btns{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+button{font:500 13px var(--f-body);color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:6px 12px;cursor:pointer}
+button:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tag{font:500 12px var(--f-body);color:var(--warn);background:var(--warn-bg);padding:3px 9px;border-radius:3px}
+nav{display:flex;gap:2px;overflow-x:auto;margin-top:10px;scrollbar-width:thin}
+nav button{border:0;border-bottom:3px solid transparent;border-radius:0;background:none;padding:10px 14px;color:var(--muted);white-space:nowrap;font:500 14px var(--f-body)}
+nav button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accent)}
+main{padding-top:22px}
+.panel{display:grid;gap:16px;grid-template-columns:repeat(12,minmax(0,1fr))}
+.panel[hidden]{display:none}
+.c12{grid-column:span 12}.c8{grid-column:span 8}.c7{grid-column:span 7}.c5{grid-column:span 5}.c4{grid-column:span 4}.c6{grid-column:span 6}
+@media (max-width:900px){.c8,.c7,.c5,.c4,.c6{grid-column:span 12}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:18px;min-width:0}
+.card>h2{margin-bottom:4px}
+.lead{color:var(--muted);font-size:13px;margin-bottom:14px;max-width:70ch}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{font:600 11px var(--f-body);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:left;padding:6px 10px 6px 0;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 10px 9px 0;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+.n{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+th.n{text-align:right}
+.muted{color:var(--muted)}
+.small{font-size:12px}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:1px 9px;border-radius:999px;font:600 12px/1.7 var(--f-body);white-space:nowrap}
+.pill::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.pill.good{color:var(--good);background:var(--good-bg)}.pill.warn{color:var(--warn);background:var(--warn-bg)}.pill.crit{color:var(--crit);background:var(--crit-bg)}.pill.none{color:var(--muted);background:var(--surface2)}
+/* overview */
+.score{display:flex;align-items:baseline;gap:10px;margin:6px 0 4px}
+.score b{font:500 64px/1 var(--f-mono);letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.score span{color:var(--muted);font-family:var(--f-mono)}
+.facts{display:grid;gap:0;margin-top:14px}
+.facts div{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid var(--line)}
+.facts dt{color:var(--muted)}.facts dd{margin:0;font-family:var(--f-mono);font-variant-numeric:tabular-nums;text-align:right}
+.find{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.find li{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start}
+.find .pill{margin-top:1px}
+/* forms */
+.forms{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr))}
+.fr{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:6px 0;border-bottom:1px dashed var(--line)}
+.fr:last-child{border-bottom:0}
+.fi{display:flex;align-items:center;gap:6px}
+.fu{color:var(--muted);font-size:12px;min-width:44px}
+input[type=number],input[type=text],select{font:400 13px var(--f-mono);color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:5px 8px}
+input[type=number]{width:104px;text-align:right;font-variant-numeric:tabular-nums}
+input[type=text].wide{width:100%;font-family:var(--f-body)}
+.fi input[type=text]{width:190px;font-family:var(--f-body)}
+select{font-family:var(--f-body)}
+/* bars */
+.stack{display:flex;height:36px;border-radius:4px;overflow:hidden;background:var(--surface2)}
+.stack i{display:block;min-width:0;height:100%}
+.hatch{background:repeating-linear-gradient(45deg,var(--c9) 0 4px,var(--surface2) 4px 8px)}
+.blabel{display:flex;justify-content:space-between;margin:14px 0 6px;font-weight:600}
+.blabel span:last-child{font-family:var(--f-mono);font-weight:500}
+.legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:4px 18px;margin-top:10px;font-size:13px}
+.legend div{display:flex;gap:8px;align-items:center;min-width:0}
+.legend b{width:11px;height:11px;border-radius:2px;flex:none}
+.legend span:last-child{margin-left:auto;font-family:var(--f-mono);color:var(--muted)}
+.rr{display:grid;grid-template-columns:150px minmax(0,1fr) auto;gap:12px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)}
+.rr:last-child{border-bottom:0}
+.meter{height:10px;background:var(--surface2);border-radius:5px;overflow:hidden}
+.meter i{display:block;height:100%;background:var(--c5);border-radius:5px}
+.meter i.warn{background:var(--c6)}.meter i.crit{background:var(--c9)}.meter i.acc{background:var(--accent)}
+.rv{font-family:var(--f-mono);font-size:12px;color:var(--muted);text-align:right}
+@media (max-width:640px){.rr{grid-template-columns:1fr;gap:4px}.rv{text-align:left}}
+.sp{display:grid;grid-template-columns:200px minmax(0,1fr) 44px;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.sp:last-child{border-bottom:0}
+.sp .d{grid-column:1/-1;color:var(--muted);font-size:12px;margin-top:-6px}
+.sp .v{font-family:var(--f-mono);text-align:right}
+@media (max-width:640px){.sp{grid-template-columns:1fr 44px}.sp .meter{grid-column:1/-1}}
+.rng{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin:8px 0 14px}
+input[type=range]{flex:1;min-width:180px;accent-color:var(--accent)}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.kv div{border-top:2px solid var(--accent);padding-top:8px}
+.kv span{display:block;color:var(--muted);font-size:12px}
+.kv b{font:500 22px var(--f-mono);font-variant-numeric:tabular-nums}
+.cg{margin-bottom:22px}.cg:last-child{margin-bottom:0}
+.cg h3{margin-bottom:6px;padding-bottom:6px;border-bottom:2px solid var(--fg)}
+.ci{display:grid;grid-template-columns:minmax(0,1fr) 150px minmax(0,220px);gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.ci .t{min-width:0}
+.key{font:600 10px var(--f-body);text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin-left:6px}
+@media (max-width:760px){.ci{grid-template-columns:1fr}}
+textarea{width:100%;min-height:420px;font:400 12.5px/1.55 var(--f-mono);color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:12px;resize:vertical}
+.ok{color:var(--good);font-size:13px}
+td input[type=number]{width:84px}
+@media (prefers-reduced-motion:no-preference){.meter i,.stack i{transition:width .25s ease}}
+/* process diagram */
+.pd{display:block}
+.pd .fl{fill:none;opacity:.8}
+.pd .fl.fresh{stroke:var(--c1)}.pd .fl.rec{stroke:var(--c5)}.pd .fl.eff{stroke:var(--c6)}.pd .fl.loss{stroke:var(--c9)}
+.pd .bx{fill:var(--surface);stroke:var(--line);stroke-width:1.3}
+.pd .bx.src{fill:var(--accent-soft);stroke:var(--c1)}
+.pd .bx.rec{fill:var(--good-bg);stroke:var(--c5)}
+.pd .bx.out{fill:var(--crit-bg);stroke:var(--c9)}
+.pd .pb{fill:var(--bg);stroke:var(--muted);stroke-width:1.3}
+.pd .tc{fill:var(--fg);font:600 12.5px var(--f-body)}.pd .sc{fill:var(--muted);font:11.5px var(--f-mono)}.pd .ml{fill:var(--muted);font:italic 11px var(--f-body)}
+.pd .mat{fill:none;stroke:var(--muted);stroke-width:2}.pd .steam{fill:none;stroke:var(--muted);stroke-width:2;stroke-dasharray:6 4}
+.pd .frame{fill:none;stroke:var(--line);stroke-width:1.2;stroke-dasharray:6 5}
+.pd .t{fill:var(--fg);font:600 12.5px var(--f-body)}
+.pd .s{fill:var(--muted);font:11.5px var(--f-mono)}
+.pd .lab{fill:var(--fg);font:500 11.5px var(--f-mono);paint-order:stroke;stroke:var(--surface);stroke-width:4px;stroke-linejoin:round}
+.pd .cap{fill:var(--muted);font:600 10px var(--f-body);letter-spacing:.08em}
+.lev{display:grid;grid-template-columns:minmax(150px,1.3fr) 2fr minmax(86px,.9fr);gap:10px 12px;align-items:center;margin:10px 0}
+.lev label{font-size:13.5px}.lev output{font:500 12.5px var(--f-mono);text-align:right;color:var(--fg)}
+@media (max-width:560px){.lev{grid-template-columns:1fr auto}.lev input{grid-column:1/-1;order:3}}
+.big{font:600 22px/1.25 var(--f-body);margin-bottom:6px}
+.simbar{display:flex;flex-wrap:wrap;gap:8px 16px;justify-content:space-between;align-items:center;margin-bottom:8px}
+.simbar h2{margin:0}
+.simhost.anim .pd .fl{stroke-dasharray:12 7;animation:wflow .9s linear infinite}
+@keyframes wflow{to{stroke-dashoffset:-19}}
+@media (prefers-reduced-motion:reduce){.simhost.anim .pd .fl{animation:none}}
+.lg{display:flex;flex-wrap:wrap;gap:8px 22px;margin-bottom:12px;font-size:13px}
+.lg span{display:inline-flex;align-items:center;gap:8px}
+.lg i{display:inline-block;width:26px;height:5px;border-radius:2px}
+</style>
+
+<div class="wrap">
+<header class="top">
+  <div class="brandrow">
+    <div><h1>Cane Water Audit</h1><div class="sub" id="plantline"></div></div>
+    <div class="btns"><span class="seg" id="unitSeg" role="group" aria-label="Flow unit"><button type="button" data-unit="m">m³/day</button><button type="button" data-unit="L">L/day</button></span><span class="tag" id="exTag">Example data. Overwrite with your plant's readings.</span><button id="btnEx" type="button">Load example</button><button id="btnBlank" type="button">Start blank</button></div>
+  </div>
+  <nav id="tabs" role="tablist" aria-label="Audit sections">
+    <button role="tab" data-tab="overview" aria-selected="true" type="button">Overview</button>
+    <button role="tab" data-tab="plant" aria-selected="false" type="button">Plant &amp; flows</button>
+    <button role="tab" data-tab="balance" aria-selected="false" type="button">Water balance</button>
+    <button role="tab" data-tab="diagram" aria-selected="false" type="button">Process diagram</button>
+    <button role="tab" data-tab="flow" aria-selected="false" type="button">Flow chart</button>
+    <button role="tab" data-tab="sim" aria-selected="false" type="button">Simulation</button>
+    <button role="tab" data-tab="effluent" aria-selected="false" type="button">Effluent</button>
+    <button role="tab" data-tab="security" aria-selected="false" type="button">Water security</button>
+    <button role="tab" data-tab="checklist" aria-selected="false" type="button">Checklist</button>
+    <button role="tab" data-tab="action" aria-selected="false" type="button">Action plan</button>
+    <button role="tab" data-tab="report" aria-selected="false" type="button">Report</button>
+  </nav>
+</header>
+
+<main>
+<section class="panel" id="p-overview"></section>
+
+<section class="panel" id="p-plant" hidden>
+  <div class="card c12"><h2>Plant and flow data</h2><p class="lead">Enter a season-average day from your meters and logbooks. All flows are in <span class="unitWord">m³ per day</span> unless stated. Switch the unit with the m³/day and L/day buttons at the top; the figures you type are converted for you. Everything else in the audit recalculates as you type, and your entries are kept in this browser.</p></div>
+  <div class="c12 forms" id="forms"></div>
+</section>
+
+<section class="panel" id="p-balance" hidden></section>
+
+<section class="panel" id="p-diagram" hidden></section>
+<section class="panel" id="p-flow" hidden></section>
+
+<section class="panel" id="p-sim" hidden></section>
+
+<section class="panel" id="p-effluent" hidden>
+  <div class="c12" id="efSum"></div>
+  <div class="card c12">
+    <h2>Outlet quality against limits</h2>
+    <p class="lead">Enter the latest lab results at the sugar ETP outlet and the distillery CPU or condensate polishing outlet. Limits are indicative placeholders. Replace them with the values in your Consent to Operate and the standard for your disposal or reuse route.</p>
+    <div class="tw"><table id="efTable"></table></div>
+  </div>
+</section>
+
+<section class="panel" id="p-security" hidden>
+  <div class="c12" id="secMain"></div>
+  <div class="card c12">
+    <h2>Drought stress test</h2>
+    <p class="lead">Cut the fresh water available to the plant and see how long storage lasts and how much of the gap the adopted action plan closes.</p>
+    <div class="rng"><label for="stress">Fresh water supply reduced by</label><input type="range" id="stress" min="0" max="70" step="5"><b id="stressVal" style="font-family:var(--f-mono)"></b></div>
+    <div id="stressOut"></div>
+  </div>
+</section>
+
+<section class="panel" id="p-checklist" hidden>
+  <div class="c12" id="clSum"></div>
+  <div class="card c12" id="clList"></div>
+</section>
+
+<section class="panel" id="p-action" hidden></section>
+
+<section class="panel" id="p-report" hidden>
+  <div class="card c12">
+    <h2>Audit report</h2>
+    <p class="lead">A detailed PDF report with the process diagram, action plan and solar PV study, built live from the data you have entered, or a plain-text summary to copy.</p>
+    <div class="btns" style="margin-bottom:10px"><button class="primary" id="btnPdf" type="button">Download PDF report</button><span class="ok" id="pdfMsg" role="status"></span></div>
+    <div class="btns" style="margin-bottom:10px"><button class="primary" id="btnCopy" type="button">Copy report</button><span class="ok" id="copyMsg" role="status"></span></div>
+    <textarea id="repText" readonly aria-label="Audit report text"></textarea>
+  </div>
+</section>
+</main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/jspdf@4.2.1/dist/jspdf.umd.min.js"></script>
+<script>
+(function(){
+'use strict';
+var $=function(s,r){return (r||document).querySelector(s)};
+var $$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))};
+var N=function(v){v=parseFloat(v);return isFinite(v)?v:0};
+var UDt=function(){return isL()?'L/day':'m3/day'};
+var f=function(n,d){d=d||0;return isFinite(n)?Number(n).toLocaleString('en-IN',{minimumFractionDigits:d,maximumFractionDigits:d}):'-'};
+var UNIT='m';try{if(localStorage.getItem('cane-water-unit')==='L')UNIT='L'}catch(e){}
+var isL=function(){return UNIT==='L'};
+var fq=function(n,d){return isL()?f(Math.round(n*1000),0):f(n,d)};
+var UD=function(){return isL()?'L/day':'m³/day'};
+var UDs=function(){return isL()?'L/d':'m³/d'};
+var fqv=function(n){return isL()?Math.round(n*1e9)/1e6:n};
+var esc=function(s){return String(s==null?'':s).replace(/[&<>"]/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]})};
+var clone=function(o){return JSON.parse(JSON.stringify(o))};
+var clamp=function(x,a,b){a=a==null?0:a;b=b==null?100:b;return Math.max(a,Math.min(b,x))};
+var get=function(p){return p.split('.').reduce(function(o,k){return o?o[k]:undefined},S)};
+var set=function(p,v){var a=p.split('.'),o=S;while(a.length>1)o=o[a.shift()];o[a[0]]=v};
+function merge(a,b){for(var k in b){if(b[k]&&typeof b[k]==='object'&&!Array.isArray(b[k])&&a[k]&&typeof a[k]==='object')merge(a[k],b[k]);else a[k]=b[k]}return a}
+
+/* ---------- reference data ---------- */
+var CL=[
+ {g:'Metering and data',i:[
+  {id:'m1',k:1,t:'Flow meters on every fresh water intake (river, canal, borewell) with a daily logbook'},
+  {id:'m2',k:1,t:'Sub-meters at major users: boiler, cooling, imbibition, distillery process, domestic'},
+  {id:'m3',k:0,t:'Monthly water balance prepared and reconciled to within 10%'},
+  {id:'m4',k:1,t:'Groundwater NOC and surface water allocation valid, with withdrawal inside the permit'}]},
+ {g:'Sugar house',i:[
+  {id:'s1',k:0,t:'Cane condensate segregated by quality, with contaminated condensate kept apart'},
+  {id:'s2',k:1,t:'Condensate used for boiler feed and imbibition, with no condensate sent to drain'},
+  {id:'s3',k:0,t:'Imbibition water optimised and monitored against a set target'},
+  {id:'s4',k:0,t:'Spray pond or cooling system fitted with make-up control, drift and overflow control'},
+  {id:'s5',k:0,t:'Cane yard and floor wash water screened, settled and reused'},
+  {id:'s6',k:0,t:'Leak, overflow and valve-passing survey completed in the last 12 months'}]},
+ {g:'Cooling systems',i:[
+  {id:'k1',k:0,t:'Cooling tower cycles of concentration measured weekly and held at or above target'},
+  {id:'k2',k:0,t:'Cooling blowdown and condenser overflow recovered or reused'}]},
+ {g:'Distillery and zero liquid discharge',i:[
+  {id:'d1',k:1,t:'Spent wash concentrated or evaporated with no discharge to land or water (ZLD)'},
+  {id:'d2',k:0,t:'Evaporator process condensate reused for cooling make-up or fermentation'},
+  {id:'d3',k:0,t:'Concentrated spent wash used in an approved route (incineration boiler or composting)'},
+  {id:'d4',k:0,t:'Fermenter and equipment cleaning water recovered'},
+  {id:'d5',k:0,t:'Condensate COD and conductivity checked before reuse'}]},
+ {g:'Effluent treatment',i:[
+  {id:'e1',k:0,t:'ETP and CPU hydraulic capacity covers peak load, with equalisation storage'},
+  {id:'e2',k:0,t:'Treated water reused for green belt, ash conditioning or cooling make-up'},
+  {id:'e3',k:1,t:'Online monitoring of flow, pH and COD connected to the regulator where mandated'},
+  {id:'e4',k:0,t:'Sludge handled and disposed under authorisation'}]},
+ {g:'Regulatory and reporting',i:[
+  {id:'r1',k:1,t:'Consent to Operate valid and each condition tracked to closure'},
+  {id:'r2',k:0,t:'Water cess returns and the annual Environmental Statement filed on time'},
+  {id:'r3',k:0,t:'Effluent analysed by an accredited lab at the frequency in the consent'}]},
+ {g:'Water security and governance',i:[
+  {id:'w1',k:1,t:'Drought contingency plan covering storage, an alternate source and priority users'},
+  {id:'w2',k:0,t:'Rainwater harvesting, farm pond or recharge structure in place'},
+  {id:'w3',k:0,t:'Raw water storage covers at least 15 days of fresh demand'},
+  {id:'w4',k:0,t:'Cane grower programme for drip irrigation and field water efficiency'}]}
+];
+var EFP=[{k:'ph',n:'pH',u:'',min:5.5},{k:'bod',n:'BOD (3 days, 27 °C)',u:'mg/L'},{k:'cod',n:'COD',u:'mg/L'},{k:'tss',n:'Total suspended solids',u:'mg/L'},{k:'og',n:'Oil and grease',u:'mg/L'},{k:'tds',n:'Total dissolved solids',u:'mg/L'}];
+var ACT=[
+ {id:'cond',a:'sugar',t:'Return all surplus cane condensate to boiler feed and imbibition',w:'Condensate generated but not reused is replaced by fresh water elsewhere in the sugar house.',sv:function(c){return Math.min(c.condUnused,c.freshS)},cap:15},
+ {id:'coc',a:'dist',t:'Raise cooling tower cycles of concentration to target',w:'Make-up falls as cycles rise, because less water leaves as blowdown.',sv:function(c){var C1=S.plant.coc,C2=S.plant.cocT,M=S.use.dCool;if(C1<=1||C2<=C1)return 0;return M*(1-(C2/(C2-1))/(C1/(C1-1)))},cap:12},
+ {id:'mee',a:'dist',t:'Send all evaporator condensate to cooling make-up and fermentation',w:'Process condensate is low in solids and replaces fresh make-up directly.',sv:function(c){return Math.min(c.meeUnused,c.freshD)},cap:25},
+ {id:'etp',a:'shared',t:'Polish and reuse treated effluent for cooling, ash handling and green belt',w:'About 60% of treated effluent that is now discharged is assumed reusable after polishing.',sv:function(){return 0.6*S.out.disch},cap:40},
+ {id:'leak',a:'shared',t:'Leak and overflow survey with sub-metering at major users',w:'Half of the unaccounted flow is assumed to be recoverable leakage and overflow.',sv:function(c){return 0.5*Math.max(0,c.unacc)},cap:8},
+ {id:'wash',a:'sugar',t:'Closed-loop cane yard and floor wash water with screening and settling',w:'Assumes 40% of wash water can be recirculated.',sv:function(){return 0.4*S.use.wash},cap:10},
+ {id:'spray',a:'sugar',t:'Spray pond make-up control and drift or overflow fixes',w:'Assumes an 8% cut in spray pond make-up.',sv:function(){return 0.08*S.use.coolS},cap:12},
+ {id:'rwh',a:'shared',t:'Rainwater harvesting from roofs and yards into storage',w:'Annual rain on the catchment at 80% runoff, averaged per day, less what you already harvest.',sv:function(c){return Math.max(0,c.rwh-S.src.rain)},cap:30},
+ {id:'fpv',a:'sugar',t:'Floating solar PV over the non-spray part of the spray pond',w:'Panels shade the water under them and cut passive surface evaporation. The power offsets grid import and is the larger benefit. Evaporation in the spray zone is what cools the water, so keep that zone open and check condenser vacuum before fixing the layout.',sv:function(){var P=S.plant;return P.pondArea*P.pvCover/100*P.evapRate/1000*P.pvCut/100},en:function(){var P=S.plant,kwp=P.pondArea*P.pvCover/100*P.pvDens/100;return {kwp:kwp,kwh:kwp*P.pvYield}},auto:function(en){return en.kwp*S.plant.pvCapex/1e5},cap:0}
+];
+var AREA={sugar:'Sugar',dist:'Distillery',shared:'Shared'};
+var STL={yes:'Compliant',part:'Partial',no:'Not in place',na:'Not applicable','':'Not assessed'};
+
+/* ---------- state ---------- */
+var KEY='cane-water-audit-v1';
+var EX={edited:false,stress:30,
+ plant:{name:'Example Cooperative Sugar & Distillery',season:'2026-27',tcd:5000,days:160,klpd:60,distShare:25,permit:6000,storage:45000,coc:3.5,cocT:5,meter:55,rain:800,catch:30000,cost:18,drought:3,pondArea:8000,pvCover:40,evapRate:6,pvCut:80,pvDens:7,pvYield:1450,tariff:6,pvCapex:50000},
+ src:{river:2600,ground:600,rain:0,muni:40},
+ rec:{condGen:1650,condReuse:1100,etpGen:800,etpReuse:300,meeGen:380,meeReuse:170},
+ use:{boiler:350,imb:1250,coolS:1100,wash:260,dProc:380,dCool:620,dDm:90,dom:150},
+ out:{disch:400,stor:0},
+ dist:{spent:552,zld:'yes'},
+ tg:{sugar:150,sugarA:300,dist:5,distA:10,spent:8,recycle:50,effl:200},
+ ef:{ph:{sl:9,sv:7.4,dl:9,dv:7.1},bod:{sl:100,sv:78,dl:30,dv:24},cod:{sl:250,sv:310,dl:250,dv:196},tss:{sl:100,sv:88,dl:100,dv:42},og:{sl:10,sv:12,dl:10,dv:4},tds:{sl:2100,sv:1650,dl:2100,dv:1480}},
+ cl:{},act:{}};
+(function(){var st=['part','part','no','yes','part','yes','part','part','part','no','part','yes','part','yes','part','no','part','part','yes','no','part','yes','yes','part','no','yes','part','no','no'],i=0;
+ CL.forEach(function(g){g.i.forEach(function(it){EX.cl[it.id]={s:st[i%st.length],n:''};i++})});
+ var on={cond:1,coc:1,leak:1,mee:1,fpv:1};ACT.forEach(function(a){EX.act[a.id]={on:!!on[a.id],capex:a.cap}})})();
+var S;
+try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){S=null}
+S=S&&S.plant?merge(clone(EX),S):clone(EX);
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+
+/* ---------- calculations ---------- */
+function calc(){
+ var P=S.plant,src=S.src,rec=S.rec,u=S.use,o=S.out,c={};
+ c.fresh=src.river+src.ground+src.rain+src.muni;
+ c.recov=rec.condReuse+rec.etpReuse+rec.meeReuse;
+ c.inputs=c.fresh+c.recov;
+ c.useS=u.boiler+u.imb+u.coolS+u.wash;
+ c.useD=u.dProc+u.dCool+u.dDm;
+ c.useO=u.dom;
+ c.uses=c.useS+c.useD+c.useO;
+ c.unacc=c.inputs-c.uses-o.disch-o.stor;
+ c.closure=c.inputs?c.unacc/c.inputs*100:0;
+ c.freshD=c.fresh*P.distShare/100;c.freshS=c.fresh-c.freshD;
+ c.lpt=P.tcd?c.freshS*1000/P.tcd:0;
+ c.kk=P.klpd?c.freshD/P.klpd:0;
+ c.spent=P.klpd?S.dist.spent/P.klpd:0;
+ c.recycle=c.uses?c.recov/c.uses*100:0;
+ c.condUnused=Math.max(0,rec.condGen-rec.condReuse);
+ c.meeUnused=Math.max(0,rec.meeGen-rec.meeReuse);
+ c.etpUnused=Math.max(0,rec.etpGen-rec.etpReuse);
+ c.efflLpt=P.tcd?rec.etpGen*1000/P.tcd:0;
+ c.permitUse=P.permit?c.fresh/P.permit*100:0;
+ c.days=c.fresh?P.storage/c.fresh:0;
+ c.gw=c.fresh?src.ground/c.fresh:0;
+ c.rwh=P.catch*P.rain/1000*0.8/365;
+ /* effluent */
+ var pass=0,fail=0,tot=0,fails=[];
+ EFP.forEach(function(p){var e=S.ef[p.k];[['s','Sugar ETP'],['d','Distillery CPU']].forEach(function(z){var v=e[z[0]+'v'],l=e[z[0]+'l'];var s=efSt(p,v,l);if(s!=='none'){tot++;if(s==='crit'){fail++;fails.push(z[1]+' '+p.n)}else pass++}})});
+ c.ef={pass:pass,fail:fail,tot:tot,fails:fails};
+ /* checklist */
+ var y=0,pt=0,no=0,na=0,un=0,keyNo=[],gaps=[];
+ CL.forEach(function(g){g.i.forEach(function(it){var s=(S.cl[it.id]||{}).s||'';if(s==='yes')y++;else if(s==='part')pt++;else if(s==='no'){no++;gaps.push(it);if(it.k)keyNo.push(it)}else if(s==='na')na++;else un++})});
+ c.cl={y:y,pt:pt,no:no,na:na,un:un,keyNo:keyNo,gaps:gaps,score:(y+pt+no)?(y+0.5*pt)/(y+pt+no)*100:0,answered:y+pt+no};
+ /* security */
+ var sh=c.fresh?[src.river,src.ground,src.rain,src.muni].map(function(x){return x/c.fresh}):[1,0,0,0];
+ var hhi=sh.reduce(function(a,b){return a+b*b},0);
+ var pu=c.permitUse;
+ c.sec=[
+  {n:'Source diversity',w:.15,s:clamp((1-hhi)/0.6*100),d:'Largest source supplies '+f(Math.max.apply(null,sh)*100)+'% of fresh water.'},
+  {n:'Storage autonomy',w:.20,s:clamp(c.days/30*100),d:f(c.days,1)+' days of fresh demand in raw water storage. 30 days scores full marks.'},
+  {n:'Groundwater reliance',w:.10,s:clamp(100-c.gw/0.5*100),d:f(c.gw*100)+'% of intake is groundwater. Above 50% scores zero.'},
+  {n:'Recovered water share',w:.15,s:clamp(c.recycle/50*100),d:f(c.recycle)+'% of use is met by recovered water. 50% scores full marks.'},
+  {n:'Headroom under permit',w:.10,s:clamp((100-pu)/30*100),d:'Fresh intake is '+f(pu)+'% of permitted withdrawal. At or below 70% scores full marks.'},
+  {n:'Rainwater contribution',w:.05,s:clamp(c.fresh?src.rain/c.fresh/0.05*100:0),d:'Harvested rain is '+f(c.fresh?src.rain/c.fresh*100:0,1)+'% of intake. 5% scores full marks.'},
+  {n:'Metering coverage',w:.10,s:clamp(P.meter),d:f(P.meter)+'% of major use points are metered.'},
+  {n:'Source reliability in drought',w:.15,s:clamp((P.drought-1)/4*100),d:'Self-assessed '+P.drought+' of 5 for the main source in a drought year.'}
+ ];
+ c.secTotal=c.sec.reduce(function(a,p){return a+p.s*p.w},0);
+ /* actions */
+ var tot2={sugar:0,dist:0,shared:0},adopted=0,capex=0,rows=[],kwp=0,kwh=0,saveRs=0;
+ ACT.forEach(function(a){var ad=S.act[a.id]||{on:false,capex:a.cap};var sv=Math.max(0,a.sv(c));var yr=sv*P.days;var en=a.en?a.en():{kwp:0,kwh:0};
+  var wrs=yr*P.cost/1e5,ers=en.kwh*P.tariff/1e5,rs=wrs+ers,cx=a.auto?a.auto(en):ad.capex;
+  var pb=rs>0?cx/rs*12:Infinity;rows.push({a:a,sv:sv,yr:yr,rs:rs,wrs:wrs,ers:ers,en:en,pb:pb,on:ad.on,capex:cx});
+  if(ad.on){tot2[a.a]+=sv;adopted+=sv;capex+=cx;kwp+=en.kwp;kwh+=en.kwh;saveRs+=rs}});
+ c.act={rows:rows,adopted:adopted,capex:capex,tot:tot2,kwp:kwp,kwh:kwh};
+ c.act.saveRs=saveRs;
+ var ds=P.distShare/100;
+ c.act.freshS=Math.max(0,c.freshS-tot2.sugar-tot2.shared*(1-ds));
+ c.act.freshD=Math.max(0,c.freshD-tot2.dist-tot2.shared*ds);
+ c.act.lpt=P.tcd?c.act.freshS*1000/P.tcd:0;
+ c.act.kk=P.klpd?c.act.freshD/P.klpd:0;
+ return c;
+}
+function efSt(p,v,l){if(v===''||v==null||l===''||l==null)return 'none';v=+v;l=+l;if(p.k==='ph')return(v<p.min||v>l)?'crit':'good';if(v>l)return 'crit';if(v>0.9*l)return 'warn';return 'good'}
+var lo=function(v,t,a){return v<=t?'good':v<=a?'warn':'crit'};
+var hi=function(v,t,a){return v>=t?'good':v>=a?'warn':'crit'};
+var PT={good:'On target',warn:'Watch',crit:'Action'};
+var pill=function(k,t){return '<span class="pill '+k+'">'+(t||PT[k]||'No data')+'</span>'};
+function band(x){return x>=75?['good','Secure']:x>=50?['warn','Moderate']:['crit','Vulnerable']}
+
+function findings(c){
+ var P=S.plant,T=S.tg,L=[];
+ var add=function(k,t){L.push({k:k,t:t})};
+ if(Math.abs(c.closure)>10)add('crit','The water balance does not close. '+f(Math.abs(c.closure),1)+'% of flow ('+fq(Math.abs(c.unacc))+' '+UD()+') is '+(c.unacc>0?'unaccounted':'counted twice')+'. Meter the major use points before trusting other figures.');
+ else if(Math.abs(c.closure)>5)add('warn','Balance closure error is '+f(Math.abs(c.closure),1)+'%. Aim for 5% or less by adding sub-meters.');
+ if(c.lpt>T.sugarA)add('crit','Sugar-side fresh water is '+f(c.lpt)+' L/tcc, above the alert level of '+f(T.sugarA)+'.');
+ else if(c.lpt>T.sugar)add('warn','Sugar-side fresh water is '+f(c.lpt)+' L/tcc against a target of '+f(T.sugar)+'.');
+ if(P.klpd){if(c.kk>T.distA)add('crit','Distillery fresh water is '+f(c.kk,1)+' KL per KL of ethanol, above the alert level of '+f(T.distA)+'.');
+  else if(c.kk>T.dist)add('warn','Distillery fresh water is '+f(c.kk,1)+' KL per KL of ethanol against a target of '+f(T.dist)+'.');
+  if(S.dist.zld==='no')add('crit','Distillery is not at zero liquid discharge. Spent wash disposal is the first compliance risk.');
+  else if(c.spent>T.spent)add('warn','Spent wash generation is '+f(c.spent,1)+' KL/KL against a target of '+f(T.spent,1)+'. Check fermentation dilution and evaporator load.')}
+ if(c.condUnused>0)add(c.condUnused>0.1*c.freshS?'crit':'warn',fq(c.condUnused)+' '+UD()+' of cane condensate is generated but not reused.');
+ if(c.meeUnused>0&&P.klpd)add('warn',fq(c.meeUnused)+' '+UD()+' of distillery process condensate is not reused.');
+ if(S.out.disch>0)add('warn',fq(S.out.disch)+' '+UD()+' of treated effluent is discharged. Part of it can replace fresh make-up.');
+ if(P.coc<P.cocT)add('warn','Cooling tower runs at '+f(P.coc,1)+' cycles against a target of '+f(P.cocT,1)+'.');
+ if(c.ef.fail>0)add('crit',c.ef.fail+' effluent reading'+(c.ef.fail>1?'s exceed':' exceeds')+' the limit: '+c.ef.fails.slice(0,4).join(', ')+(c.ef.fails.length>4?' and more':'')+'.');
+ if(c.days<7)add('crit','Raw water storage covers only '+f(c.days,1)+' days of demand.');else if(c.days<15)add('warn','Raw water storage covers '+f(c.days,1)+' days of demand. Target is 15 or more.');
+ if(c.permitUse>100)add('crit','Fresh intake is '+f(c.permitUse)+'% of the permitted withdrawal.');else if(c.permitUse>90)add('warn','Fresh intake is '+f(c.permitUse)+'% of the permitted withdrawal.');
+ if(c.gw>0.4)add('warn','Groundwater supplies '+f(c.gw*100)+'% of fresh water. Check aquifer trend and NOC limits.');
+ if(c.cl.keyNo.length)add(c.cl.keyNo.length>=3?'crit':'warn',c.cl.keyNo.length+' key checklist item'+(c.cl.keyNo.length>1?'s are':' is')+' not in place, including: '+(c.cl.keyNo[0].t.charAt(0).toLowerCase()+c.cl.keyNo[0].t.slice(1))+'.');
+ if(P.meter<60)add('warn','Only '+f(P.meter)+'% of major use points are metered.');
+ var order={crit:0,warn:1,good:2};L.sort(function(a,b){return order[a.k]-order[b.k]});
+ return L;
+}
+
+/* ---------- rendering ---------- */
+var C;
+function renderOverview(c){
+ var b=band(c.secTotal),P=S.plant,T=S.tg,rows=[];
+ var add=function(m,a,u,t,k){rows.push('<tr><td>'+m+'</td><td class="n">'+a+' <span class="muted small">'+u+'</span></td><td class="n muted">'+t+'</td><td>'+pill(k)+'</td></tr>')};
+ add('Sugar-side fresh water',f(c.lpt),'L/tcc','≤ '+f(T.sugar),lo(c.lpt,T.sugar,T.sugarA));
+ if(P.klpd){add('Distillery fresh water',f(c.kk,1),'KL/KL','≤ '+f(T.dist,1),lo(c.kk,T.dist,T.distA));
+  add('Spent wash generated',f(c.spent,1),'KL/KL','≤ '+f(T.spent,1),lo(c.spent,T.spent,T.spent*1.25))}
+ add('Sugar effluent generated',f(c.efflLpt),'L/tcc','≤ '+f(T.effl),lo(c.efflLpt,T.effl,T.effl*1.5));
+ add('Recovered water share of use',f(c.recycle),'%','≥ '+f(T.recycle),hi(c.recycle,T.recycle,T.recycle/2));
+ add('Water balance closure error',f(Math.abs(c.closure),1),'%','≤ 5',lo(Math.abs(c.closure),5,10));
+ add('Cooling tower cycles',f(P.coc,1),'COC','≥ '+f(P.cocT,1),hi(P.coc,P.cocT,P.cocT*0.7));
+ add('Raw water storage',f(c.days,1),'days','≥ 15',hi(c.days,15,7));
+ add('Intake against permit',f(c.permitUse),'%','≤ 90',lo(c.permitUse,90,100));
+ add('Major use points metered',f(P.meter),'%','≥ 90',hi(P.meter,90,60));
+ rows.push('<tr><td>Effluent readings within limit</td><td class="n">'+c.ef.pass+' of '+c.ef.tot+'</td><td class="n muted">all</td><td>'+(c.ef.tot?pill(c.ef.fail?'crit':'good',c.ef.fail?'Action':'On target'):pill('none','No data'))+'</td></tr>');
+ rows.push('<tr><td>Checklist compliance</td><td class="n">'+(c.cl.answered?f(c.cl.score):'-')+' <span class="muted small">%</span></td><td class="n muted">≥ 80</td><td>'+(c.cl.answered?pill(hi(c.cl.score,80,60)):pill('none','No data'))+'</td></tr>');
+ var fl=findings(c);
+ $('#p-overview').innerHTML=
+ '<div class="card c4"><h2>Water security index</h2><div class="score"><b>'+f(c.secTotal)+'</b><span>/ 100</span></div>'+pill(b[0],b[1])+
+ '<dl class="facts" style="margin-bottom:0"><div><dt>Fresh intake</dt><dd>'+fq(c.fresh)+' '+UD()+'</dd></div><div><dt>Recovered water used</dt><dd>'+fq(c.recov)+' '+UD()+'</dd></div><div><dt>Intake against permit</dt><dd>'+f(c.permitUse)+'%</dd></div><div><dt>Raw water storage</dt><dd>'+f(c.days,1)+' days</dd></div><div><dt>Balance closure error</dt><dd>'+f(Math.abs(c.closure),1)+'%</dd></div></dl></div>'+
+ '<div class="card c8"><h2>Findings</h2><p class="lead">Ranked by severity from the figures you have entered.</p>'+
+ (fl.length?'<ul class="find">'+fl.map(function(x){return '<li>'+pill(x.k,x.k==='crit'?'Action':'Watch')+'<span>'+esc(x.t)+'</span></li>'}).join('')+'</ul>':'<p>No gaps found against the current targets.</p>')+'</div>'+
+ '<div class="card c12"><h2>Audit scorecard</h2><p class="lead">Targets for the first four rows are editable under Plant &amp; flows.</p><div class="tw"><table><thead><tr><th>Measure</th><th class="n">Actual</th><th class="n">Target</th><th>Status</th></tr></thead><tbody>'+rows.join('')+'</tbody></table></div></div>';
+}
+
+function stack(segs,T){return '<div class="stack" role="img" aria-label="Stacked bar of flows">'+segs.map(function(s){var w=T?Math.max(0,s.v)/T*100:0;return '<i class="'+(s.hatch?'hatch':'')+'" style="width:'+w+'%;'+(s.hatch?'':'background:'+s.col)+'" title="'+esc(s.n)+': '+fq(s.v)+' '+UD()+'"></i>'}).join('')+'</div>'}
+function legend(segs){return '<div class="legend">'+segs.filter(function(s){return s.v>0}).map(function(s){return '<div><b class="'+(s.hatch?'hatch':'')+'" style="'+(s.hatch?'':'background:'+s.col)+'"></b><span>'+esc(s.n)+'</span><span>'+fq(s.v)+'</span></div>'}).join('')+'</div>'}
+function rr(label,part,whole,note){var p=whole?clamp(part/whole*100):0;var k=p>=85?'':p>=60?'warn':'crit';return '<div class="rr"><div>'+label+'</div><div class="meter" role="img" aria-label="'+f(p)+'% reused"><i class="'+k+'" style="width:'+p+'%"></i></div><div class="rv">'+fq(part)+' of '+fq(whole)+' '+UD()+' · '+f(p)+'%</div></div>'}
+
+function renderBalance(c){
+ var s=S.src,u=S.use,o=S.out,rec=S.rec;
+ var inS=[{n:'River, canal or reservoir',v:s.river,col:'var(--c1)'},{n:'Groundwater',v:s.ground,col:'var(--c2)'},{n:'Harvested rainwater',v:s.rain,col:'var(--c3)'},{n:'Municipal or other',v:s.muni,col:'var(--c4)'},{n:'Recovered: cane condensate',v:rec.condReuse,col:'var(--c5)'},{n:'Recovered: treated effluent',v:rec.etpReuse,col:'#5FAE7B'},{n:'Recovered: distillery condensate',v:rec.meeReuse,col:'#8CCB9F'}];
+ var outS=[{n:'Sugar house',v:c.useS,col:'var(--c6)'},{n:'Distillery',v:c.useD,col:'var(--c7)'},{n:'Domestic and green belt',v:c.useO,col:'var(--c8)'},{n:'Treated effluent discharged',v:o.disch,col:'var(--c9)'},{n:'Storage filling',v:Math.max(0,o.stor),col:'var(--c10)'},{n:'Unaccounted',v:Math.max(0,c.unacc),hatch:true}];
+ var T=Math.max(c.inputs,c.inputs-c.unacc+(c.unacc<0?0:0),c.uses+o.disch+Math.max(0,o.stor)+Math.max(0,c.unacc),1);
+ var kind=Math.abs(c.closure)>10?'crit':Math.abs(c.closure)>5?'warn':'good';
+ var secs=[
+  ['Sugar house',c.useS,[['Boiler make-up',S.use.boiler],['Imbibition and process',S.use.imb],['Cooling and spray pond make-up',S.use.coolS],['Washing and cleaning',S.use.wash]]],
+  ['Distillery',c.useD,[['Process and mash dilution',S.use.dProc],['Cooling tower make-up',S.use.dCool],['DM plant and boiler',S.use.dDm]]],
+  ['Domestic and green belt',c.useO,[]]];
+ var rows=secs.map(function(g){return '<tr><td><b>'+g[0]+'</b></td><td class="n"><b>'+fq(g[1])+'</b></td><td class="n muted">'+f(c.uses?g[1]/c.uses*100:0)+'%</td></tr>'+g[2].map(function(x){return '<tr><td class="muted" style="padding-left:14px">'+x[0]+'</td><td class="n">'+fq(x[1])+'</td><td class="n muted">'+f(c.uses?x[1]/c.uses*100:0)+'%</td></tr>'}).join('')}).join('');
+ $('#p-balance').innerHTML=
+ '<div class="card c12"><h2>Plant water balance</h2><p class="lead">Everything entering the plant, fresh or recovered, against everything the plant uses, discharges or stores. The remainder is water you cannot account for.</p>'+
+ '<div class="blabel"><span>Water in</span><span>'+fq(c.inputs)+' '+UD()+'</span></div>'+stack(inS,T)+legend(inS)+
+ '<div class="blabel"><span>Water used, discharged or stored</span><span>'+fq(c.uses+o.disch+o.stor)+' '+UD()+'</span></div>'+stack(outS,T)+legend(outS)+
+ '<div style="margin-top:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">'+pill(kind,Math.abs(c.closure)>10?'Does not close':Math.abs(c.closure)>5?'Loose closure':'Closes')+'<span>'+(c.unacc>=0?'Unaccounted flow':'Uses exceed inflow by')+' <b style="font-family:var(--f-mono)">'+fq(Math.abs(c.unacc))+' '+UD()+'</b> ('+f(Math.abs(c.closure),1)+'% of inflow). Target is 5% or less.</span></div></div>'+
+ '<div class="card c7"><h2>Recovery and reuse</h2><p class="lead">Share of each recoverable stream that is put back into service.</p>'+
+ rr('Cane condensate',S.rec.condReuse,S.rec.condGen)+rr('Treated sugar effluent',S.rec.etpReuse,S.rec.etpGen)+(S.plant.klpd?rr('Distillery condensate',S.rec.meeReuse,S.rec.meeGen):'')+
+ '<div style="margin-top:14px" class="kv"><div><span>Recovered water used</span><b>'+fq(c.recov)+' <small>'+UDs()+'</small></b></div><div><span>Share of total use</span><b>'+f(c.recycle)+'%</b></div><div><span>Recoverable, not reused</span><b>'+fq(c.condUnused+c.etpUnused+c.meeUnused)+' <small>'+UDs()+'</small></b></div></div></div>'+
+ '<div class="card c5"><h2>Use by section</h2><p class="lead">'+UD()+' and share of total use.</p><div class="tw"><table><thead><tr><th>Section</th><th class="n">'+UD()+'</th><th class="n">Share</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>'+
+ '<div class="card c12"><h2>Intensity</h2><div class="kv"><div><span>Sugar fresh water, L per tonne cane</span><b>'+f(c.lpt)+'</b></div><div><span>Distillery fresh water, KL per KL ethanol</span><b>'+f(c.kk,1)+'</b></div><div><span>Spent wash, KL per KL ethanol</span><b>'+f(c.spent,1)+'</b></div><div><span>Sugar effluent, L per tonne cane</span><b>'+f(c.efflLpt)+'</b></div><div><span>Fresh water per season</span><b>'+f(c.fresh*S.plant.days/1000,0)+' ML</b></div></div><p class="lead" style="margin:12px 0 0">Fresh water is split between sugar and distillery using the distillery share you entered. A sub-meter on the distillery intake removes this assumption.</p></div>';
+}
+
+function renderSecurity(c){
+ var b=band(c.secTotal);
+ $('#secMain').innerHTML='<div class="card"><div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap;justify-content:space-between"><div><h2>Water security index</h2><p class="lead" style="margin:4px 0 0">A screening score from eight weighted factors. Use it to compare seasons and to decide where to act first.</p></div><div class="score" style="margin:0"><b>'+f(c.secTotal)+'</b><span>/ 100</span>'+pill(b[0],b[1])+'</div></div><div style="margin-top:12px">'+
+ c.sec.map(function(p){var k=p.s>=75?'':p.s>=50?'warn':'crit';return '<div class="sp"><div><b>'+p.n+'</b> <span class="muted small">weight '+f(p.w*100)+'%</span></div><div class="meter"><i class="'+k+'" style="width:'+p.s+'%"></i></div><div class="v">'+f(p.s)+'</div><div class="d">'+esc(p.d)+'</div></div>'}).join('')+'</div></div>';
+ renderStress(c);
+}
+function renderStress(c){
+ var r=S.stress/100,gap=c.fresh*r,days=gap>0?S.plant.storage/gap:Infinity;
+ var cover=gap>0?clamp(c.act.adopted/gap*100,0,100):100;
+ var kind=gap===0?'good':days<15?'crit':days<30?'warn':'good';
+ $('#stressVal').textContent=S.stress+'%';$('#stress').value=S.stress;
+ $('#stressOut').innerHTML='<div class="kv"><div><span>Fresh supply available</span><b>'+fq(c.fresh-gap)+' '+UDs()+'</b></div><div><span>Shortfall</span><b>'+fq(gap)+' '+UDs()+'</b></div><div><span>Storage covers the shortfall for</span><b>'+(gap>0?f(days,0)+' days':'-')+'</b></div><div><span>Adopted actions close</span><b>'+f(cover)+'%</b></div></div><p style="margin-top:12px">'+pill(kind,gap===0?'No stress applied':days<15?'Storage runs out within two weeks':days<30?'Storage lasts under a month':'Storage lasts a month or more')+' <span class="muted">Crushing season is '+f(S.plant.days)+' days, so storage '+(days>=S.plant.days?'covers the full season at this cut':'does not cover the full season at this cut')+'.</span></p>';
+}
+
+function renderEfTable(){
+ var h='<thead><tr><th>Parameter</th><th>Unit</th><th class="n">Sugar limit</th><th class="n">Sugar ETP outlet</th><th>Status</th><th class="n">Distillery limit</th><th class="n">Distillery outlet</th><th>Status</th></tr></thead><tbody>';
+ EFP.forEach(function(p){var e=S.ef[p.k];
+  h+='<tr><td>'+p.n+(p.k==='ph'?' <span class="muted small">(minimum 5.5)</span>':'')+'</td><td class="muted">'+(p.u||'-')+'</td>'+
+  '<td class="n"><input type="number" step="any" data-ef="'+p.k+'.sl" aria-label="Sugar limit '+p.n+'" value="'+e.sl+'"></td><td class="n"><input type="number" step="any" data-ef="'+p.k+'.sv" aria-label="Sugar measured '+p.n+'" value="'+e.sv+'"></td><td id="st-'+p.k+'-s"></td>'+
+  '<td class="n"><input type="number" step="any" data-ef="'+p.k+'.dl" aria-label="Distillery limit '+p.n+'" value="'+e.dl+'"></td><td class="n"><input type="number" step="any" data-ef="'+p.k+'.dv" aria-label="Distillery measured '+p.n+'" value="'+e.dv+'"></td><td id="st-'+p.k+'-d"></td></tr>'});
+ $('#efTable').innerHTML=h+'</tbody>';updEf();
+}
+function updEf(){EFP.forEach(function(p){var e=S.ef[p.k];['s','d'].forEach(function(z){var el=$('#st-'+p.k+'-'+z);if(!el)return;var s=efSt(p,e[z+'v'],e[z+'l']);el.innerHTML=s==='none'?pill('none','No data'):s==='crit'?pill('crit','Exceeds'):s==='warn'?pill('warn','Near limit'):pill('good','Within')})})}
+function renderEfSum(c){
+ var T=S.tg;
+ $('#efSum').innerHTML='<div class="card"><h2>Compliance position</h2><div class="kv" style="margin-top:10px"><div><span>Readings within limit</span><b>'+c.ef.pass+' of '+c.ef.tot+'</b></div><div><span>Readings over limit</span><b style="color:'+(c.ef.fail?'var(--crit)':'inherit')+'">'+c.ef.fail+'</b></div><div><span>Sugar effluent generated</span><b>'+f(c.efflLpt)+' L/tcc</b></div><div><span>Norm for effluent generation</span><b>'+f(T.effl)+' L/tcc</b></div><div><span>Distillery ZLD</span><b>'+(S.plant.klpd?(S.dist.zld==='yes'?'In place':'Not in place'):'n/a')+'</b></div></div>'+(c.ef.fail?'<p style="margin-top:12px">'+pill('crit','Exceedances')+' '+esc(c.ef.fails.join(', '))+'.</p>':'')+'</div>';
+}
+
+function renderChecklist(){
+ var h='';
+ CL.forEach(function(g){h+='<div class="cg"><h3>'+g.g+'</h3>'+g.i.map(function(it){var v=S.cl[it.id]||{s:'',n:''};
+  return '<div class="ci"><div class="t">'+esc(it.t)+(it.k?'<span class="key">Key</span>':'')+'</div><select data-cl="'+it.id+'" aria-label="Status: '+esc(it.t)+'">'+['','yes','part','no','na'].map(function(o){return '<option value="'+o+'"'+(v.s===o?' selected':'')+'>'+STL[o]+'</option>'}).join('')+'</select><input type="text" class="wide" data-cln="'+it.id+'" placeholder="Evidence or remark" aria-label="Remark" value="'+esc(v.n)+'"></div>'}).join('')+'</div>'});
+ $('#clList').innerHTML=h;
+}
+function renderClSum(c){
+ var k=c.cl.answered?hi(c.cl.score,80,60):'none';
+ $('#clSum').innerHTML='<div class="card"><h2>Checklist result</h2><div class="kv" style="margin-top:10px"><div><span>Compliance score</span><b>'+(c.cl.answered?f(c.cl.score)+'%':'-')+'</b></div><div><span>Compliant</span><b>'+c.cl.y+'</b></div><div><span>Partial</span><b>'+c.cl.pt+'</b></div><div><span>Not in place</span><b>'+c.cl.no+'</b></div><div><span>Not yet assessed</span><b>'+c.cl.un+'</b></div></div><p class="lead" style="margin:12px 0 0">Score counts compliant items in full and partial items at half, and leaves out items marked not applicable or not assessed. '+pill(k,c.cl.answered?undefined:'No data')+'</p></div>';
+}
+
+function renderActions(c){
+ var A=c.act,P=S.plant;
+ var tr=A.rows.map(function(r){
+  return '<tr><td><input type="checkbox" data-act="'+r.a.id+'" aria-label="Adopt: '+esc(r.a.t)+'"'+(r.on?' checked':'')+'></td><td style="min-width:260px"><b>'+esc(r.a.t)+'</b><div class="muted small">'+AREA[r.a.a]+'. '+esc(r.a.w)+'</div></td><td class="n">'+fq(r.sv)+'</td><td class="n">'+f(r.yr/1000,1)+'</td>'+(r.a.auto?'<td class="n">'+f(r.capex,0)+'</td>':'<td class="n"><input type="number" step="any" data-capex="'+r.a.id+'" aria-label="Capital cost lakh rupees" value="'+r.capex+'"></td>')+'<td class="n">'+f(r.rs,1)+'</td><td class="n">'+(isFinite(r.pb)?f(r.pb,0):'-')+'</td></tr>'}).join('');
+ $('#p-action').innerHTML=
+ '<div class="card c12"><h2>Water saving measures</h2><p class="lead">Savings come from your own flows and are indicative. Tick the measures you plan to adopt and set the capital cost in ₹ lakh. Water is valued at ₹'+f(P.cost)+' per m³ over '+f(P.days)+' crushing days. Solar power is valued at ₹'+f(P.tariff,1)+' per kWh over the full year, and its cost comes from the installed kWp.</p><div class="tw"><table><thead><tr><th>Adopt</th><th>Measure</th><th class="n">Saves '+UD()+'</th><th class="n">Saves ML/season</th><th class="n">Cost ₹ lakh</th><th class="n">Saves ₹ lakh/year</th><th class="n">Payback months</th></tr></thead><tbody>'+tr+'</tbody></table></div></div>'+
+ '<div class="card c12"><h2>Result of adopted measures</h2><div class="kv" style="margin-top:10px"><div><span>Fresh water saved</span><b>'+fq(A.adopted)+' '+UDs()+'</b></div><div><span>Share of fresh intake</span><b>'+f(c.fresh?A.adopted/c.fresh*100:0)+'%</b></div><div><span>Sugar fresh water</span><b>'+f(c.lpt)+' → '+f(A.lpt)+'</b><span>L/tcc</span></div>'+(P.klpd?'<div><span>Distillery fresh water</span><b>'+f(c.kk,1)+' → '+f(A.kk,1)+'</b><span>KL/KL</span></div>':'')+'<div><span>Capital needed</span><b>₹'+f(A.capex)+' lakh</b></div>'+(A.kwp>0?'<div><span>Solar capacity</span><b>'+f(A.kwp)+' kWp</b><span>'+f(A.kwh/1000)+' MWh per year</span></div>':'')+'<div><span>Saving per year</span><b>₹'+f(A.saveRs,1)+' lakh</b></div><div><span>Simple payback</span><b>'+(A.saveRs>0?f(A.capex/A.saveRs*12,0)+' mo':'-')+'</b></div></div></div>';
+}
+
+function renderReport(c){
+ var P=S.plant,T=S.tg,L=[],ln=function(x){L.push(x==null?'':x)};
+ var d=new Date().toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'});
+ ln('WATER AUDIT REPORT');ln((P.name||'Plant')+', season '+P.season);ln('Prepared '+d);if(!S.edited)ln('NOTE: figures are example data and have not been replaced.');ln();
+ ln('1. SCOPE');ln('Cane crushing '+f(P.tcd)+' t/day for '+f(P.days)+' days. Ethanol '+f(P.klpd)+' KL/day. Season-average daily flows.');ln();
+ ln('2. KEY FIGURES');
+ ln('Fresh intake: '+fq(c.fresh)+' '+UDt()+' ('+f(c.permitUse)+'% of permit)');
+ ln('Recovered water used: '+fq(c.recov)+' '+UDt()+' ('+f(c.recycle)+'% of use)');
+ ln('Sugar fresh water: '+f(c.lpt)+' L/tcc (target '+f(T.sugar)+')');
+ if(P.klpd){ln('Distillery fresh water: '+f(c.kk,1)+' KL/KL (target '+f(T.dist,1)+')');ln('Spent wash: '+f(c.spent,1)+' KL/KL (target '+f(T.spent,1)+'), ZLD '+(S.dist.zld==='yes'?'in place':'not in place'))}
+ ln('Balance closure error: '+f(Math.abs(c.closure),1)+'% ('+fq(Math.abs(c.unacc))+' '+UDt()+' '+(c.unacc>=0?'unaccounted':'over-accounted')+')');
+ ln('Raw water storage: '+f(c.days,1)+' days');ln();
+ ln('3. FINDINGS');var fl=findings(c);if(!fl.length)ln('No gaps found against current targets.');fl.forEach(function(x,i){ln((i+1)+'. ['+(x.k==='crit'?'ACTION':'WATCH')+'] '+x.t)});ln();
+ ln('4. EFFLUENT QUALITY');ln(c.ef.pass+' of '+c.ef.tot+' readings within limit.');EFP.forEach(function(p){var e=S.ef[p.k];ln(p.n+': sugar '+(e.sv===''?'-':e.sv)+' (limit '+e.sl+'), distillery '+(e.dv===''?'-':e.dv)+' (limit '+e.dl+')')});ln();
+ ln('5. WATER SECURITY');ln('Index '+f(c.secTotal)+' of 100, '+band(c.secTotal)[1]+'.');c.sec.forEach(function(p){ln('- '+p.n+': '+f(p.s))});ln();
+ ln('6. CHECKLIST');ln('Score '+(c.cl.answered?f(c.cl.score)+'%':'not assessed')+'. '+c.cl.y+' compliant, '+c.cl.pt+' partial, '+c.cl.no+' not in place, '+c.cl.un+' not assessed.');
+ if(c.cl.gaps.length){ln('Not in place:');c.cl.gaps.forEach(function(it){ln('- '+it.t+(it.k?' (key)':''))})}ln();
+ ln('7. ACTION PLAN');var ad=c.act.rows.filter(function(r){return r.on});
+ if(!ad.length)ln('No measures adopted yet.');else{ad.forEach(function(r){ln('- '+r.a.t+': saves '+fq(r.sv)+' '+UDt()+', cost Rs '+f(r.capex)+' lakh'+(r.en.kwp>0?', solar '+f(r.en.kwp)+' kWp ('+f(r.en.kwh/1000)+' MWh/year)':''))});ln('Total saving '+fq(c.act.adopted)+' '+UDt()+' ('+f(c.fresh?c.act.adopted/c.fresh*100:0)+'% of intake). Capital Rs '+f(c.act.capex)+' lakh. Sugar fresh water becomes '+f(c.act.lpt)+' L/tcc.')}
+ ln();ln('Limits and targets are indicative defaults. Confirm against the Consent to Operate and applicable regulator standards.');
+ $('#repText').value=L.join('\n');
+}
+
+function renderDiagram(c,sim){
+ var s=S.src,u=S.use,rec=S.rec,D=S.dist,P=S.plant,o=S.out;
+ var Z=function(x){return Math.max(0,x)};
+ var condB=(u.boiler+u.imb)?rec.condReuse*u.boiler/(u.boiler+u.imb):0,condI=rec.condReuse-condB;
+ var etpD=Math.min(rec.etpReuse,u.dom),etpC=rec.etpReuse-etpD,meeC=rec.meeReuse;
+ var conc=Z(D.spent-rec.meeGen);
+ var freshTo=[['dom',48,Z(u.dom-etpD),'Domestic and green belt'],['wash',144,Z(u.wash),'Cane yard and washing'],['imb',216,Z(u.imb-condI),'Milling and imbibition'],['boiler',360,Z(u.boiler-condB),'Boiler and cogeneration'],['coolS',432,Z(u.coolS-etpC),'Cooling and spray pond'],['dProc',554,Z(u.dProc),'Fermentation and distillation'],['dCool',626,Z(u.dCool-meeC),'Distillery cooling tower'],['dDm',698,Z(u.dDm),'Distillery DM plant and boiler']];
+ var FL=[];
+ var add=function(name,x1,y1,x2,y2,v,type,t,lx,ly){FL.push({name:name,x1:x1,y1:y1,x2:x2,y2:y2,v:v,type:type,t:t||0.5,lx:lx,ly:ly})};
+ [['River, canal or reservoir',s.river],['Groundwater',s.ground],['Harvested rainwater',s.rain],['Municipal or other',s.muni]].forEach(function(r,i){add(r[0]+' to raw water storage',176,127+90*i,250,150+60*i,r[1],'fresh',0.45)});
+ freshTo.forEach(function(r,i){add('Raw water to '+r[3].toLowerCase(),380,80+i*(360/7),480,r[1],r[2],'fresh',0.72)});
+ add('Unaccounted leaks, overflow and meter error',315,460,315,490,Z(c.unacc),'loss',0.5,350,479);
+ add('Sugar effluent to ETP',690,144,850,76,rec.etpGen,'eff',0.55);
+ add('Treated effluent to land or water',1040,64,1110,64,o.disch,'loss');
+ add('Treated effluent to domestic and green belt',850,52,690,48,etpD,'rec');
+ add('Treated effluent to cooling and spray pond',850,92,690,432,etpC,'rec',0.3);
+ add('Cane condensate from boiling house',690,288,850,288,rec.condGen,'rec');
+ add('Cane condensate to imbibition',850,264,690,216,condI,'rec');
+ add('Cane condensate to boiler',850,312,690,360,condB,'rec');
+ add('Unreused cane condensate',1040,288,1110,288,c.condUnused,'loss');
+ add('Spent wash to evaporator',690,554,850,672,D.spent,'eff',0.55);
+ add('Evaporator condensate to cooling tower',850,708,690,626,meeC,'rec');
+ add('Concentrated spent wash',1040,672,1110,648,conc,'loss');
+ add('Unreused evaporator condensate',1040,708,1110,736,c.meeUnused,'loss');
+ add('Sugar cooling make-up, lost',690,432,1110,418,u.coolS,'loss',0.6);
+ add('Distillery cooling make-up, lost',690,626,1110,398,u.dCool,'loss',0.7);
+ var maxV=Math.max.apply(null,FL.map(function(x){return x.v}).concat([1]));
+ var sw=function(v){return Math.max(1.6,v/maxV*14)};
+ var bez=function(a,t){var mx=(a.x1+a.x2)/2,q=1-t;return [q*q*q*a.x1+3*q*q*t*mx+3*q*t*t*mx+t*t*t*a.x2,q*q*q*a.y1+3*q*q*t*a.y1+3*q*t*t*a.y2+t*t*t*a.y2]};
+ var lines='',labs='';
+ FL.forEach(function(a){if(!(a.v>0))return;var mx=(a.x1+a.x2)/2;
+  lines+='<path class="fl '+a.type+'" d="M'+a.x1+','+a.y1+' C'+mx+','+a.y1+' '+mx+','+a.y2+' '+a.x2+','+a.y2+'" stroke-width="'+sw(a.v).toFixed(1)+'" marker-end="url(#ar-'+a.type+')"><title>'+esc(a.name)+': '+fq(a.v)+' '+UD()+'</title></path>';
+  var p=a.lx!=null?[a.lx,a.ly]:bez(a,a.t);
+  labs+='<text class="lab" x="'+p[0].toFixed(0)+'" y="'+(p[1]+4).toFixed(0)+'" text-anchor="middle">'+fq(a.v)+'</text>'});
+ var bx=function(cls,x,y,w,h,ls,val){var vs=val?(Array.isArray(val)?val:[val]):[];var n=ls.length+vs.length,y0=y+h/2-n*15/2+11,t='';
+  ls.forEach(function(l,i){t+='<text class="t" x="'+(x+10)+'" y="'+(y0+i*15)+'">'+esc(l)+'</text>'});
+  vs.forEach(function(l,i){t+='<text class="s" x="'+(x+10)+'" y="'+(y0+(ls.length+i)*15)+'">'+esc(l)+'</text>'});
+  return '<rect class="bx '+cls+'" x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="4"/>'+t};
+ var B='';
+ [['River, canal','or reservoir',s.river],['Groundwater','(borewells)',s.ground],['Harvested','rainwater',s.rain],['Municipal','or tanker',s.muni]].forEach(function(r,i){B+=bx('src',16,100+90*i,160,54,[r[0],r[1]],fq(r[2])+' '+UDs()+'')});
+ B+=bx('src',250,60,130,400,['Raw water','storage and','treatment'],[f(P.storage)+' m³',f(c.days,1)+' days cover']);
+ B+=bx('',480,20,210,56,['Domestic and green belt'],fq(u.dom)+' '+UDs()+' use');
+ B+=bx('',480,116,210,56,['Cane yard and washing'],fq(u.wash)+' '+UDs()+' use');
+ B+=bx('',480,188,210,56,['Milling and imbibition'],fq(u.imb)+' '+UDs()+' use');
+ B+=bx('',480,260,210,56,['Boiling house and evaporators'],'condensate '+fq(rec.condGen)+' '+UDs()+'');
+ B+=bx('',480,332,210,56,['Boiler and cogeneration'],fq(u.boiler)+' '+UDs()+' use');
+ B+=bx('',480,404,210,56,['Cooling and spray pond'],[fq(u.coolS)+' '+UDs()+' make-up'].concat(S.act.fpv&&S.act.fpv.on?['solar PV cover '+f(P.pvCover)+'%']:[]));
+ B+=bx('',480,526,210,56,['Fermentation and distillation'],fq(u.dProc)+' '+UDs()+' use');
+ B+=bx('',480,598,210,56,['Cooling tower, COC '+f(P.coc,1)],fq(u.dCool)+' '+UDs()+' make-up');
+ B+=bx('',480,670,210,56,['DM plant and boiler'],fq(u.dDm)+' '+UDs()+' use');
+ B+=bx('rec',850,248,190,80,['Cane condensate','recovery'],'collected '+fq(rec.condGen)+' '+UDs()+'');
+ B+=bx('rec',850,24,190,80,['Sugar effluent','treatment plant (ETP)'],fq(rec.etpGen)+' '+UDs()+' treated');
+ B+=bx('rec',850,650,190,80,['Evaporator and CPU','(spent wash)'],fq(D.spent)+' '+UDs()+' spent wash');
+ B+=bx('out',1110,28,170,72,['Treated effluent','to land or water'],fq(o.disch)+' '+UDs()+'');
+ B+=bx('out',1110,252,170,72,['Unreused cane','condensate'],fq(c.condUnused)+' '+UDs()+'');
+ B+=bx('out',1110,372,170,72,['Evaporation, drift','and blowdown'],fq(u.coolS+u.dCool)+' '+UDs()+'');
+ B+=bx('out',1110,612,170,72,['Concentrated spent','wash: incineration','or compost (ZLD)'],fq(conc)+' '+UDs()+''+(D.zld==='no'?' · no ZLD':''));
+ B+=bx('out',1110,700,170,72,['Unreused evaporator','condensate'],fq(c.meeUnused)+' '+UDs()+'');
+ B+=bx('out',240,490,150,64,['Unaccounted:','leaks, overflow,','meter error'],fq(c.unacc)+' '+UDs()+'');
+ var caps='<text class="cap" x="16" y="92">SOURCES</text><text class="cap" x="250" y="52">STORAGE</text><text class="cap" x="480" y="12">USE POINTS</text><text class="cap" x="850" y="14">RECOVERY</text><text class="cap" x="1110" y="18">OUTLETS</text>';
+ var frames='<rect class="frame" x="464" y="92" width="242" height="392" rx="6"/><text class="cap" x="476" y="108">SUGAR HOUSE</text><rect class="frame" x="464" y="500" width="242" height="250" rx="6"/><text class="cap" x="476" y="516">DISTILLERY</text>';
+ var mk=function(id,col){return '<marker id="ar-'+id+'" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var('+col+')"/></marker>'};
+ var svg='<svg class="pd" viewBox="0 0 1300 790" role="img" aria-label="Whole-plant water flow diagram from sources through use points, recovery loops and outlets" style="min-width:1040px;width:100%;height:auto"><defs>'+mk('fresh','--c1')+mk('rec','--c5')+mk('eff','--c6')+mk('loss','--c9')+'</defs>'+caps+frames+lines+B+labs+'</svg>';
+ if(sim)return svg;
+ var TL={fresh:['none','Fresh water'],rec:['good','Recovered or reused'],eff:['warn','To treatment'],loss:['crit','Outlet or loss']},ord={fresh:0,rec:1,eff:2,loss:3};
+ var reg=FL.filter(function(a){return a.v>0}).sort(function(a,b){return ord[a.type]-ord[b.type]}).map(function(a){return '<tr><td>'+esc(a.name)+'</td><td class="n">'+fq(a.v)+'</td><td>'+pill(TL[a.type][0],TL[a.type][1])+'</td></tr>'}).join('');
+ $('#p-diagram').innerHTML='<div class="card c12"><h2>Whole-plant water flow</h2><p class="lead">Every source, use point, recovery loop and outlet drawn from the figures on Plant &amp; flows. Line thickness follows the flow in '+UD()+', and the labels give the value. Hover a line for its name. On a narrow screen, scroll the diagram sideways.</p>'+
+ '<div class="lg"><span><i style="background:var(--c1)"></i>Fresh water</span><span><i style="background:var(--c5)"></i>Recovered and reused</span><span><i style="background:var(--c6)"></i>Sent to treatment</span><span><i style="background:var(--c9)"></i>Outlets and losses</span></div><div class="tw">'+svg+'</div></div>'+
+ '<div class="card c7"><h2>Flow register</h2><p class="lead">The same streams as a table, grouped by type, for the audit file.</p><div class="tw"><table><thead><tr><th>Stream</th><th class="n">'+UD()+'</th><th>Type</th></tr></thead><tbody>'+reg+'</tbody></table></div></div>'+
+ '<div class="card c5"><h2>How the diagram is drawn</h2><p class="lead" style="margin-bottom:8px">Your inputs do not say where each recovered stream is used, so the diagram assumes this:</p><p style="margin-bottom:8px">Cane condensate goes to the boiler and imbibition in proportion to their use. Treated effluent goes to domestic and green belt first, then to cooling. Evaporator condensate goes to the distillery cooling tower. Fresh water supplies what is left at each use point.</p><p style="margin-bottom:8px">Cooling make-up is drawn as an outlet because most of it leaves as evaporation, drift and blowdown.</p><p class="muted">Storage change of '+fq(o.stor)+' '+UD()+' is not drawn. Unaccounted flow shows what the meters do not explain.</p></div>';
+}
+
+function renderFlow(c){
+ var s=S.src,u=S.use,rec=S.rec,D=S.dist,P=S.plant,o=S.out;
+ var Z=function(x){return Math.max(0,x)};
+ var condB=(u.boiler+u.imb)?rec.condReuse*u.boiler/(u.boiler+u.imb):0,condI=rec.condReuse-condB;
+ var etpD=Math.min(rec.etpReuse,u.dom),etpC=rec.etpReuse-etpD,meeC=rec.meeReuse;
+ var conc=Z(D.spent-rec.meeGen);
+ var fW=Z(u.wash),fI=Z(u.imb-condI),fB=Z(u.boiler-condB),fC=Z(u.coolS-etpC),fD=Z(u.dom-etpD),fP=Z(u.dProc),fT=Z(u.dCool-meeC),fM=Z(u.dDm);
+ var X0=150,PW=150,PITCH=180,sx=function(i){return X0+i*PITCH},cx=function(i){return sx(i)+PW/2};
+ var Y1=140,H=56,Y2=350,Y3=516,Y4=650;
+ var pipes=[];
+ var pp=function(pts,type,v,name,lab,w){pipes.push({pts:pts,type:type,v:v,name:name,lab:lab,w:w})};
+ var maxV=Math.max.apply(null,[c.fresh,rec.condGen,rec.etpGen,D.spent,1]);
+ var sw=function(v){return Math.max(1.8,v/maxV*13)};
+ /* sources */
+ var src=[['River, canal','or reservoir',s.river],['Groundwater','(borewells)',s.ground],['Harvested','rainwater',s.rain],['Municipal','or tanker',s.muni]];
+ /* fresh buses */
+ var busA=fW+fI,busB=fB+fC+fD,busC=fP+fT+fM;
+ pp([[116,116],[cx(1),116]],'fresh',busA,'Fresh water bus, sugar house',null,null);
+ pp([[116,314],[cx(4)-30,314]],'fresh',busB,'Fresh water bus, power and utilities',null,null);
+ pp([[116,486],[cx(6),486]],'fresh',busC,'Fresh water bus, distillery',null,null);
+ pp([[cx(0),116],[cx(0),Y1]],'fresh',fW,'Raw water to cane yard and washing',[cx(0)+7,131,'s']);
+ pp([[cx(1),116],[cx(1),Y1]],'fresh',fI,'Raw water to milling and imbibition',[cx(1)+7,131,'s']);
+ pp([[cx(1)+0,314],[cx(1),Y2]],'fresh',0,'',null,null);
+ pp([[405,314],[405,Y2]],'fresh',fB,'Raw water to boiler',[411,336,'s']);
+ pp([[cx(3)-30,314],[cx(3)-30,Y2]],'fresh',fC,'Raw water to cooling and spray pond',[cx(3)-24,336,'s']);
+ pp([[915,314],[915,Y2]],'fresh',fD,'Raw water to domestic and green belt',[921,336,'s']);
+ pp([[cx(0),486],[cx(0),Y3]],'fresh',fT,'Raw water to distillery cooling tower',[cx(0)+7,503,'s']);
+ pp([[cx(4)+0,486],[cx(4),Y3]],'fresh',0,'',null,null);
+ pp([[cx(4),486],[cx(4),Y3]],'fresh',fP,'Raw water to fermentation and distillation',[cx(4)+7,503,'s']);
+ pp([[cx(6),486],[cx(6),Y3]],'fresh',fM,'Raw water to DM plant',[cx(6)+7,503,'s']);
+ /* condensate */
+ pp([[790,196],[790,236],[870,236]],'rec',0,'Evaporator condensate to collection',null,3);
+ pp([[945,196],[945,226]],'rec',0,'Pan condensate to collection',null,3);
+ pp([[870,262],[430,262],[430,196]],'rec',condI,'Cane condensate to imbibition',[790,256,'m']);
+ pp([[870,290],[470,290],[470,Y2]],'rec',condB,'Cane condensate to boiler',[790,284,'m']);
+ pp([[1020,268],[1050,268]],'loss',c.condUnused,'Unreused cane condensate',[1035,258,'m']);
+ /* effluent */
+ pp([[190,196],[190,Y2]],'eff',0,'Cane yard effluent to ETP',null,3);
+ pp([[340,196],[340,240],[260,240],[260,Y2]],'eff',0,'Mill and house washings to ETP',null,3);
+ pp([[190,406],[190,436],[975,436]],'rec',rec.etpReuse,'Treated effluent reuse bus',null,null);
+ pp([[800,436],[800,406]],'rec',etpC,'Treated effluent to cooling and spray pond',[794,424,'e']);
+ pp([[975,436],[975,406]],'rec',etpD,'Treated effluent to domestic and green belt',[981,424,'s']);
+ pp([[270,406],[270,452],[cx(6),452],[cx(6),406]],'loss',o.disch,'Treated effluent to land or water',[700,446,'m']);
+ /* losses and spent wash */
+ pp([[820,Y2],[820,326]],'loss',u.coolS,'Evaporation, drift and blowdown from spray pond',[826,342,'s']);
+ pp([[175,572],[175,604]],'loss',u.dCool,'Evaporation, drift and blowdown from cooling tower',[181,596,'s']);
+ pp([[765,572],[765,Y4]],'eff',D.spent,'Spent wash to evaporator',[771,614,'s']);
+ pp([[690,678],[225,678],[225,572]],'rec',meeC,'Evaporator condensate to cooling tower',[450,672,'m']);
+ pp([[840,678],[870,678]],'loss',conc,'Concentrated spent wash',[855,668,'m']);
+ pp([[765,706],[765,742]],'loss',c.meeUnused,'Unreused evaporator condensate',[771,730,'s']);
+ var lines='',labs='';
+ pipes.forEach(function(a){
+  var wd=a.w||sw(a.v);
+  if(a.w==null&&!(a.v>0))return;
+  var d='M'+a.pts.map(function(p){return p[0]+','+p[1]}).join(' L');
+  var noArrow=/bus/.test(a.name);
+  lines+='<path class="fl '+a.type+'" d="'+d+'" stroke-width="'+wd.toFixed(1)+'"'+(noArrow?'':' marker-end="url(#fa-'+a.type+')"')+'><title>'+esc(a.name)+(a.v>0?': '+fq(a.v)+' '+UD():'')+'</title></path>';
+  if(a.lab&&a.v>0)labs+='<text class="lab" x="'+a.lab[0]+'" y="'+a.lab[1]+'" text-anchor="'+(a.lab[2]==='s'?'start':a.lab[2]==='e'?'end':'middle')+'">'+fq(a.v)+'</text>'});
+ var tx=function(x,y,t,cl,an){return '<text class="'+cl+'" x="'+x+'" y="'+y+'"'+(an?' text-anchor="'+an+'"':'')+'>'+esc(t)+'</text>'};
+ var pb=function(x,y,w,h,title,sub,cls){var ls=Array.isArray(title)?title:[title],ss=sub?(Array.isArray(sub)?sub:[sub]):[],n=ls.length+ss.length,y0=y+h/2-n*14/2+10,t='';
+  ls.forEach(function(l,i){t+=tx(x+w/2,y0+i*14,l,'tc','middle')});ss.forEach(function(l,i){t+=tx(x+w/2,y0+(ls.length+i)*14,l,'sc','middle')});
+  return '<rect class="bx '+(cls||'pb')+'" x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="4"/>'+t};
+ var un=UDs(),B='';
+ /* sources */
+ src.forEach(function(r,i){var x=16+i*130;B+=pb(x,14,124,44,r[0].split('|').concat([r[1]]).slice(0,2),fq(r[2])+' '+un,'src');
+  if(r[2]>0)lines+='<path class="fl fresh" d="M'+(x+62)+',58 L'+(x+62)+',80" stroke-width="'+sw(r[2]).toFixed(1)+'" marker-end="url(#fa-fresh)"><title>'+esc(r[0]+' '+r[1])+': '+fq(r[2])+' '+UD()+'</title></path>'});
+ lines+='<path class="fl fresh" d="M'+(16+3*130+62)+',80 L66,80 L66,96" stroke-width="'+sw(c.fresh).toFixed(1)+'" marker-end="url(#fa-fresh)"><title>Fresh intake: '+esc(fq(c.fresh))+' '+UD()+'</title></path>';
+ B+=pb(16,96,100,700,['Raw water','storage and','treatment'],[fq(c.fresh)+' '+un,f(P.storage)+' m³',f(c.days,1)+' days'],'src');
+ /* sugar house */
+ var A=[['Cane yard','and washing','cane '+f(P.tcd)+' t/day'],['Cane preparation','and milling','imbibition '+fq(u.imb)+' '+un],['Juice heating','and clarification',null],['Evaporators','(multiple effect)',null],['Pan boiling','(vacuum pans)',null],['Centrifugals','and melting',null],['Sugar drying','grading, bagging','SUGAR']];
+ A.forEach(function(a,i){B+=pb(sx(i),Y1,PW,H,a.slice(0,2),a[2]||null)});
+ var arr=function(x1,y1,x2,y2,cl){return '<path class="'+(cl||'mat')+'" d="M'+x1+','+y1+' L'+x2+','+y2+'" marker-end="url(#fa-mat)"/>'};
+ for(var i=0;i<6;i++)B+=arr(sx(i)+PW,Y1+H/2,sx(i+1),Y1+H/2);
+ B+=arr(375,196,375,Y2)+tx(381,226,'bagasse','ml')+arr(545,196,545,212)+tx(551,224,'press mud to compost','ml');
+ B+=arr(1190,196,1190,Y3)+tx(1196,240,'molasses','ml');
+ B+=arr(sx(6)+PW,Y1+H/2,sx(6)+PW+36,Y1+H/2);
+ /* condensate tank */
+ B+=pb(870,226,150,84,['Cane condensate','collection'],['collected',fq(rec.condGen)+' '+un],'rec');
+ /* lane B */
+ B+=pb(sx(0),Y2,PW,H,['Sugar effluent','treatment (ETP)'],[fq(rec.etpGen)+' '+un],'rec');
+ B+=pb(sx(1),Y2,PW,H,['Boiler','bagasse fired'],['make-up '+fq(u.boiler)+' '+un]);
+ B+=pb(sx(2),Y2,PW,H,['Turbine and','cogeneration'],['power to plant, grid']);
+ B+=pb(sx(3),Y2,PW,H,['Cooling and','spray pond'],[fq(u.coolS)+' '+un+' make-up'].concat(S.act.fpv&&S.act.fpv.on?['solar PV cover '+f(P.pvCover)+'%']:[]));
+ B+=pb(sx(4),Y2,PW,H,['Domestic and','green belt'],[fq(u.dom)+' '+un]);
+ B+=pb(sx(6),Y2,PW,H,['Treated effluent','to land or water'],[fq(o.disch)+' '+un],'out');
+ B+=arr(sx(1)+PW,Y2+H/2,sx(2),Y2+H/2)+arr(sx(2)+PW,Y2+H/2,sx(3),Y2+H/2);
+ B+='<path class="steam" d="M'+(cx(2)+0)+','+Y2+' L'+cx(2)+',236 L735,236 L735,196" marker-end="url(#fa-mat)"/>'+tx(640,252,'exhaust steam','ml');
+ /* lane C distillery */
+ var Cn=[[6,['DM plant','and boiler'],[fq(u.dDm)+' '+un]],[5,['Molasses','storage'],null],[4,['Fermentation','(mash dilution)'],[fq(u.dProc)+' '+un]],[3,['Distillation','and rectification'],null],[2,['Dehydration','(molecular sieve)'],null],[1,['Ethanol','storage'],[f(P.klpd)+' KL/day']],[0,['Cooling tower','COC '+f(P.coc,1)],[fq(u.dCool)+' '+un+' make-up']]];
+ Cn.forEach(function(a){B+=pb(sx(a[0]),Y3,PW,H,a[1],a[2])});
+ [[5,4],[4,3],[3,2],[2,1]].forEach(function(p){B+=arr(sx(p[0]),Y3+H/2,sx(p[1])+PW,Y3+H/2)});
+ /* lane D */
+ B+=pb(690,Y4,150,H,['Evaporator and CPU','(spent wash)'],[fq(D.spent)+' '+un]);
+ B+=pb(870,Y4,150,H,['Concentrated wash','incineration or compost'],[D.zld==='yes'?'ZLD in place':'no ZLD']);
+ B+=pb(690,744,150,50,['Unreused evaporator','condensate'],[fq(c.meeUnused)+' '+un],'out');
+ B+=pb(1050,250,100,40,['Unreused','condensate'],[fq(c.condUnused)+' '+un],'out');
+ var caps=tx(116,108,'SUGAR HOUSE','cap')+tx(130,306,'POWER, COOLING AND UTILITIES','cap')+tx(130,478,'DISTILLERY','cap')+tx(130,642,'SPENT WASH TREATMENT','cap')+tx(16,10,'SOURCES','cap');
+ var mk=function(id,col){return '<marker id="fa-'+id+'" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:'+col+'"/></marker>'};
+ var svg='<svg class="pd" viewBox="0 0 1440 820" role="img" aria-label="Complete process flow chart of the sugar mill, cogeneration plant and distillery, with water streams" style="min-width:1240px;width:100%;height:auto"><defs>'+mk('fresh','var(--c1)')+mk('rec','var(--c5)')+mk('eff','var(--c6)')+mk('loss','var(--c9)')+mk('mat','var(--muted)')+'</defs>'+caps+lines+B+labs+'</svg>';
+ $('#p-flow').innerHTML='<div class="card c12"><h2>Complete process and water flow chart</h2><p class="lead">The whole mill from cane to sugar, power and ethanol, with every water stream drawn on the process it serves. Grey lines are process material and steam; coloured lines are water, sized by flow in '+UD()+'. Hover a line for its name. On a narrow screen, scroll the chart sideways.</p>'+
+ '<div class="lg"><span><i style="background:var(--c1)"></i>Fresh water</span><span><i style="background:var(--c5)"></i>Recovered and reused</span><span><i style="background:var(--c6)"></i>Sent to treatment</span><span><i style="background:var(--c9)"></i>Outlets and losses</span><span><i style="background:var(--muted)"></i>Process material and steam</span></div><div class="tw">'+svg+'</div></div>';
+}
+
+function renderAll(){
+ C=calc();
+ $('#plantline').textContent=(S.plant.name||'Unnamed plant')+' · season '+S.plant.season+' · '+f(S.plant.tcd)+' t/day cane'+(S.plant.klpd?' · '+f(S.plant.klpd)+' KL/day ethanol':'');
+ $('#exTag').hidden=!!S.edited;
+ renderOverview(C);renderBalance(C);renderDiagram(C);renderFlow(C);renderSim(C);renderSecurity(C);renderEfSum(C);renderClSum(C);renderReport(C);
+ if(!$('#p-action').contains(document.activeElement))renderActions(C);
+}
+
+/* ---------- plant & flow form ---------- */
+var YN=[['yes','Yes'],['no','No']];
+var DR=[[1,'1 - fails in most dry years'],[2,'2 - often short'],[3,'3 - sometimes short'],[4,'4 - rarely short'],[5,'5 - secure every year']];
+var GROUPS=[
+ {t:'Plant profile',r:[['plant.name','Plant name','','text'],['plant.season','Season','','text'],['plant.tcd','Cane crushed','t/day'],['plant.days','Crushing days per season','days'],['plant.klpd','Ethanol production','KL/day'],['plant.distShare','Fresh water drawn by distillery','%']]},
+ {t:'Fresh water intake',r:[['src.river','River, canal or reservoir','m³/day'],['src.ground','Groundwater (borewells)','m³/day'],['src.rain','Harvested rainwater','m³/day'],['src.muni','Municipal, tanker or other','m³/day'],['plant.permit','Permitted withdrawal','m³/day'],['plant.storage','Raw water storage capacity','m³'],['plant.drought','Main source in a drought year','','sel',DR]]},
+ {t:'Recovered water',r:[['rec.condGen','Cane condensate generated','m³/day'],['rec.condReuse','Cane condensate reused','m³/day'],['rec.etpGen','Treated sugar effluent generated','m³/day'],['rec.etpReuse','Treated effluent reused','m³/day'],['rec.meeGen','Distillery process condensate generated','m³/day'],['rec.meeReuse','Distillery condensate reused','m³/day']]},
+ {t:'Use in the sugar house',r:[['use.boiler','Boiler make-up','m³/day'],['use.imb','Imbibition and process','m³/day'],['use.coolS','Cooling and spray pond make-up','m³/day'],['use.wash','Washing and cleaning','m³/day']]},
+ {t:'Use in the distillery and site',r:[['use.dProc','Process and mash dilution','m³/day'],['use.dCool','Cooling tower make-up','m³/day'],['use.dDm','DM plant and boiler','m³/day'],['use.dom','Domestic and green belt','m³/day']]},
+ {t:'Discharge and storage',r:[['out.disch','Treated effluent discharged','m³/day'],['out.stor','Change in storage (+ filling)','m³/day'],['dist.spent','Spent wash generated','m³/day'],['dist.zld','Zero liquid discharge in place','','sel',YN,1]]},
+ {t:'Systems and site',r:[['plant.coc','Cooling tower cycles, measured','COC'],['plant.cocT','Cooling tower cycles, target','COC'],['plant.meter','Major use points metered','%'],['plant.rain','Annual rainfall','mm'],['plant.catch','Roof and paved catchment','m²'],['plant.cost','Cost of fresh water','₹/m³']]},
+ {t:'Spray pond solar PV',r:[['plant.pondArea','Spray pond surface area','m²'],['plant.pvCover','Share of pond covered by PV','%'],['plant.evapRate','Open-water evaporation in season','mm/day'],['plant.pvCut','Evaporation cut under the panels','%'],['plant.pvDens','PV capacity per 100 m² covered','kWp'],['plant.pvYield','Annual yield','kWh/kWp'],['plant.tariff','Value of solar power','₹/kWh'],['plant.pvCapex','Installed cost','₹/kWp']]},
+ {t:'Targets',r:[['tg.sugar','Sugar fresh water, target','L/tcc'],['tg.sugarA','Sugar fresh water, alert','L/tcc'],['tg.dist','Distillery fresh water, target','KL/KL'],['tg.distA','Distillery fresh water, alert','KL/KL'],['tg.spent','Spent wash, target','KL/KL'],['tg.effl','Sugar effluent norm','L/tcc'],['tg.recycle','Recovered water share, target','%']]}
+];
+function renderForms(){
+ $('#forms').innerHTML=GROUPS.map(function(g){return '<div class="card"><h3 style="margin-bottom:6px">'+g.t+'</h3>'+g.r.map(function(r){
+  var p=r[0],v=get(p),id='in-'+p.replace('.','-'),inp;
+  if(r[3]==='sel')inp='<select id="'+id+'" data-p="'+p+'"'+(r[5]?' data-s="1"':'')+'>'+r[4].map(function(o){return '<option value="'+o[0]+'"'+(String(v)===String(o[0])?' selected':'')+'>'+o[1]+'</option>'}).join('')+'</select>';
+  else if(r[3]==='text')inp='<input type="text" id="'+id+'" data-p="'+p+'" data-s="1" value="'+esc(v)+'">';
+  else inp='<input type="number" step="any" inputmode="decimal" id="'+id+'" data-p="'+p+'"'+(r[2]==='m³/day'?' data-fl="1" value="'+fqv(v)+'"':' value="'+v+'"')+'>';
+  return '<label class="fr" for="'+id+'"><span>'+r[1]+'</span><span class="fi">'+inp+'<span class="fu">'+(r[2]==='m³/day'?UD():(r[2]||''))+'</span></span></label>'}).join('')+'</div>'}).join('');
+}
+
+/* ---------- events ---------- */
+function touch(){S.edited=true;save()}
+document.addEventListener('input',function(e){
+ var t=e.target;
+ if(t.dataset.p){set(t.dataset.p,t.dataset.s?t.value:(t.dataset.fl&&isL()?N(t.value)/1000:N(t.value)));touch();renderAll()}
+ else if(t.dataset.ef){var a=t.dataset.ef.split('.');S.ef[a[0]][a[1]]=t.value===''?'':N(t.value);touch();updEf();C=calc();renderEfSum(C);renderOverview(C);renderReport(C);}
+ else if(t.dataset.cl){S.cl[t.dataset.cl].s=t.value;touch();renderAll()}
+ else if(t.dataset.cln){S.cl[t.dataset.cln].n=t.value;save()}
+ else if(t.id==='stress'){S.stress=N(t.value);save();C=calc();renderStress(C)}
+});
+document.addEventListener('change',function(e){
+ var t=e.target;
+ if(t.dataset.act){S.act[t.dataset.act].on=t.checked;touch();C=calc();renderActions(C);renderOverview(C);renderStress(C);renderReport(C)}
+ else if(t.dataset.capex){S.act[t.dataset.capex].capex=N(t.value);touch();C=calc();renderActions(C);renderReport(C)}
+});
+function show(id){
+ $$('.panel').forEach(function(p){p.hidden=p.id!=='p-'+id});
+ $$('#tabs button').forEach(function(b){b.setAttribute('aria-selected',b.dataset.tab===id)});
+ if(id==='action'){C=calc();renderActions(C)}
+ try{history.replaceState(null,'','#'+id)}catch(e){}
+ window.scrollTo(0,0);
+}
+$('#tabs').addEventListener('click',function(e){var b=e.target.closest('button');if(b)show(b.dataset.tab)});
+$('#btnEx').addEventListener('click',function(){S=clone(EX);save();initAll()});
+$('#btnBlank').addEventListener('click',function(){
+ var b=clone(EX);['src','rec','use','out'].forEach(function(k){for(var x in b[k])b[k][x]=0});b.dist.spent=0;
+ for(var k in b.ef){b.ef[k].sv='';b.ef[k].dv=''}
+ for(var k2 in b.cl)b.cl[k2]={s:'',n:''};for(var k3 in b.act)b.act[k3].on=false;
+ b.plant.name='';b.plant.tcd=0;b.plant.klpd=0;b.plant.storage=0;b.plant.permit=0;b.plant.meter=0;b.plant.coc=0;b.edited=true;S=b;save();initAll()});
+$('#btnCopy').addEventListener('click',function(){
+ var ta=$('#repText'),m=$('#copyMsg'),done=function(){m.textContent='Copied to clipboard.';setTimeout(function(){m.textContent=''},2500)};
+ var fb=function(){ta.focus();ta.select();m.textContent='Text selected. Press Ctrl+C or Cmd+C to copy.'};
+ try{navigator.clipboard.writeText(ta.value).then(done,fb)}catch(e){fb()}
+});
+
+/* ================= PDF report (built in the browser from the live inputs) ================= */
+var CLSTEP={m1:'Fit and calibrate meters on each intake and log them daily.',m2:'Add sub-meters at the five largest users first, then the rest.',m3:'Adopt the monthly balance in this report and review closure each month.',m4:'Keep permits current and track monthly withdrawal against the permit.',
+ s1:'Add conductivity and sugar carry-over checks and a divert valve.',s2:'Close any condensate drain and route surplus to cooling make-up.',s3:'Set an imbibition target per tonne of cane and log it each shift.',s4:'Fit level-controlled make-up and repair drift eliminators and nozzles.',s5:'Build a screen and settling tank and recirculate wash water.',s6:'Run a leak survey with a night-flow test before the next season.',
+ k1:'Fit blowdown conductivity control and set the target cycles.',k2:'Send blowdown to ash conditioning or green belt after a quality check.',
+ d1:'Confirm the disposal route and keep a monthly volume record.',d2:'Route all evaporator condensate to cooling make-up and dilution.',d3:'Document the approval and the quantity burned or composted.',d4:'Collect cleaning water and reuse it for the next wash cycle.',d5:'Test COD and conductivity weekly before reuse.',
+ e1:'Check peak load against design and add equalisation if needed.',e2:'Polish treated water and connect it to cooling and green belt.',e3:'Install and connect the analysers, then keep calibration records.',e4:'Keep manifests and disposal records for each lot.',
+ r1:'Maintain a condition tracker with an owner and a due date.',r2:'Set filing dates in the plant calendar.',r3:'Contract an accredited lab for the consent frequency.',
+ w1:'Write a drought plan with trigger levels and priority users.',w2:'Build harvesting and recharge structures before the monsoon.',w3:'Add storage or cut demand until cover reaches 15 days.',w4:'Start a drip irrigation programme with growers in the command area.'};
+var EFX={ph:'pH: check neutralisation dosing and the acid or alkali sources (cleaning chemicals, lime), and fit online pH control.',
+ bod:'BOD: check ETP loading, aeration and sludge age, and look for shock loads from spills.',
+ cod:'COD: check organic load against design, anaerobic reactor loading and temperature, and shock loads from molasses and juice spills. Add a spill sump and equalisation if peaks are the cause.',
+ tss:'Suspended solids: check clarifier loading and sludge removal, and add polishing filtration if solids carry over.',
+ og:'Oil and grease: inspect and clean oil traps, stop lubricant leaks at the mills and turbines, and keep bearing wash water out of the effluent drain.',
+ tds:'TDS: trace salt sources (boiler and cooling blowdown, regeneration waste) and keep high-TDS streams out of reuse and land application.'};
+
+function pvCalc(o){
+ o=o||{};var P=S.plant;
+ var cover=o.cover==null?P.pvCover:o.cover,area=o.area==null?P.pondArea:o.area,days=o.days==null?P.days:o.days,rate=o.rate==null?P.evapRate:o.rate,tariff=o.tariff==null?P.tariff:o.tariff;
+ var kwp=area*cover/100*P.pvDens/100,kwh=kwp*P.pvYield,wd=area*cover/100*rate/1000*P.pvCut/100,wy=wd*days;
+ var capex=kwp*P.pvCapex/1e5,wrs=wy*P.cost/1e5,ers=kwh*tariff/1e5,rs=wrs+ers;
+ return {kwp:kwp,kwh:kwh,wd:wd,wy:wy,capex:capex,wrs:wrs,ers:ers,rs:rs,pb:rs>0?capex/rs*12:Infinity,cm2:area*cover/100};
+}
+
+function buildReport(){
+ var JS=window.jspdf&&window.jspdf.jsPDF;
+ if(!JS)throw new Error('The PDF library did not load. Check the connection and reload the page.');
+ var P=S.plant,TG=S.tg,c=calc(),A=c.act;
+ var keepS=S,allS=clone(S),cAll;
+ ACT.forEach(function(a){allS.act[a.id]=allS.act[a.id]||{on:true,capex:a.cap};allS.act[a.id].on=true});
+ S=allS;try{cAll=calc()}finally{S=keepS}
+ var AA=cAll.act,R={};A.rows.forEach(function(r){R[r.a.id]=r});
+ var nAd=A.rows.filter(function(r){return r.on}).length;
+ var pc=function(a,b){return b?a/b*100:0};
+ var pbf=function(x){return isFinite(x)?f(x):'-'};
+ var fv=function(v,d){return(v===''||v==null)?'-':f(v,d)};
+ var freshAfter=c.fresh-A.adopted,daysAfter=freshAfter>0?P.storage/freshAfter:0,freshAll=c.fresh-AA.adopted;
+ var bd=band(c.secTotal),pv0=pvCalc(),cl=c.cl;
+ var dateStr=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+
+ var doc=new JS({unit:'mm',format:'a4',compress:true});
+ doc.setProperties({title:'Water audit report: '+(S.plant.name||'plant'),subject:'Wastewater recovery, reuse and water security',creator:'Cane Water Audit'});
+ var land=false,curW=210,curH=297,Y=20,toc=[];
+ var ML=function(){return land?12:18},CW=function(){return curW-2*ML()},BOT=function(){return land?14:16};
+ var K={ink:[20,36,44],muted:[86,104,114],line:[210,218,222],acc:[27,94,140],accSoft:[218,233,243],bg:[241,244,245],good:[35,112,63],goodBg:[220,239,226],warn:[143,90,6],warnBg:[250,234,202],crit:[169,43,36],critBg:[248,218,215],
+  c1:[43,108,176],c2:[154,107,58],c3:[47,149,151],c4:[124,111,176],c5:[58,140,88],c6:[201,129,28],c7:[133,80,158],c8:[95,127,142],c9:[176,68,68],c10:[151,163,170],white:[255,255,255]};
+ var kc={good:[K.good,K.goodBg],warn:[K.warn,K.warnBg],crit:[K.crit,K.critBg],none:[K.muted,[232,237,239]]};
+ var NAME=S.plant.name||'Plant';
+ function Tx(s){return String(s==null?'':s).replace(/₹\//g,'Rs/').replace(/₹/g,'Rs ').replace(/≥/g,'>= ').replace(/≤/g,'<= ').replace(/→/g,' to ').replace(/[−–—]/g,'-').replace(/₂/g,'2').replace(/³/g,'3').replace(/²/g,'2').replace(/[‘’]/g,"'").replace(/[“”]/g,'"').replace(/[^\x00-\xFF]/g,'')}
+ function fnt(b,size){doc.setFont('helvetica',b?'bold':'normal');doc.setFontSize(size)}
+ function col(a){doc.setTextColor(a[0],a[1],a[2])}
+ function fill(a){doc.setFillColor(a[0],a[1],a[2])}
+ function stroke(a){doc.setDrawColor(a[0],a[1],a[2])}
+ function pageNo(){return doc.internal.getCurrentPageInfo().pageNumber}
+ function newPage(l){land=!!l;doc.addPage('a4',land?'landscape':'portrait');curW=land?297:210;curH=land?210:297;Y=land?18:20}
+ function need(h){if(Y+h>curH-BOT()){newPage(land);return true}return false}
+
+ /* rich text: **bold** segments, word wrapped */
+ function layout(s,w,size,forceBold){
+  var words=[];Tx(s).split('**').forEach(function(seg,i){if(seg==='')return;seg.split(/(\s+)/).forEach(function(tok){if(tok!=='')words.push({t:tok,b:(i%2===1)||!!forceBold})})});
+  var lines=[[]],lw=0;
+  words.forEach(function(wd){fnt(wd.b,size);var ww=doc.getTextWidth(wd.t),sp=/^\s+$/.test(wd.t);
+   if(!sp&&lw+ww>w&&lw>0){lines.push([]);lw=0}
+   if(sp&&lw===0)return;
+   lines[lines.length-1].push({t:wd.t,b:wd.b,w:ww});lw+=ww});
+  return lines;
+ }
+ function drawLine(line,x,y,size,color){var xx=x;line.forEach(function(r){fnt(r.b,size);col(color);doc.text(r.t,xx,y);xx+=r.w})}
+ function para(s,o){o=o||{};var size=o.size||9.6,lh=size*0.3528*1.4,ind=o.indent||0,w=(o.w||CW())-ind,lines=layout(s,w,size,o.bold);
+  lines.forEach(function(ln){need(lh);drawLine(ln,(o.x==null?ML():o.x)+ind,Y+lh*0.76,size,o.color||K.ink);Y+=lh});Y+=(o.after==null?2:o.after)}
+ function small(s,o){o=o||{};o.size=8;o.color=K.muted;para(s,o)}
+ function bullets(arr){arr.forEach(function(s){var size=9.6,lh=size*0.3528*1.4,lines=layout(s,CW()-5,size);need(lh*Math.min(lines.length,2));
+  fill(K.ink);doc.circle(ML()+1.1,Y+lh*0.55,0.45,'F');
+  lines.forEach(function(ln){need(lh);drawLine(ln,ML()+4,Y+lh*0.76,size,K.ink);Y+=lh});Y+=0.9});Y+=1.6}
+ function h1(t){need(40);fnt(1,20);col(K.acc);doc.text(Tx(t),ML(),Y+7);toc.push([0,t,pageNo()]);Y+=13}
+ function h2(t){need(30);Y+=3;fnt(1,13);col(K.ink);doc.text(Tx(t),ML(),Y+4.5);toc.push([1,t,pageNo()]);Y+=8.5}
+ function h3(t){need(22);Y+=1.5;fnt(1,10.4);col(K.ink);doc.text(Tx(t),ML(),Y+3.6);Y+=6.2}
+ function note(text,kind){var bg=kind==='warn'?K.warnBg:kind==='good'?K.goodBg:kind==='crit'?K.critBg:K.accSoft,ed=kind==='warn'?K.warn:kind==='good'?K.good:kind==='crit'?K.crit:K.acc;
+  var size=9.4,lh=size*0.3528*1.4,ls=layout(text,CW()-8,size),h=ls.length*lh+6;need(h+3);
+  fill(bg);stroke(ed);doc.setLineWidth(0.25);doc.roundedRect(ML(),Y,CW(),h,1.2,1.2,'FD');
+  var yy=Y+3;ls.forEach(function(l){drawLine(l,ML()+4,yy+lh*0.76,size,K.ink);yy+=lh});Y+=h+3}
+
+ function table(cols,rows,o){o=o||{};var fs=o.fs||8.4,pad=o.pad||1.5,lh=fs*0.3528*1.28,x0=o.x==null?ML():o.x,W=o.w||CW(),xs=[],x=x0;
+  cols.forEach(function(cc){xs.push(x);x+=cc.w*W});
+  var head=o.head!==false;
+  var cellT=function(cc){return Tx(cc&&typeof cc==='object'?cc.t:cc)};
+  function hgt(row,isHead){if(row.group)return lh+pad*2;var mx=1;row.forEach(function(cc,i){fnt(isHead||(cc&&cc.b),fs);var n=doc.splitTextToSize(cellT(cc),cols[i].w*W-3.2).length;if(n>mx)mx=n});return mx*lh+pad*2}
+  function drawRow(row,isHead,idx){var h=hgt(row,isHead);
+   if(row.group){fill(K.accSoft);doc.rect(x0,Y,W,h,'F');fnt(1,fs);col(K.acc);doc.text(Tx(row.group),x0+1.6,Y+h/2+fs*0.3528*0.35)}
+   else{
+    if(isHead){fill(K.acc);doc.rect(x0,Y,W,h,'F')}else if(idx%2===0){fill(K.bg);doc.rect(x0,Y,W,h,'F')}
+    row.forEach(function(cc,i){var st=cc&&cc.st,txt=cellT(cc),isB=isHead||(cc&&cc.b)||!!st;
+     if(st){fill(kc[st][1]);doc.rect(xs[i],Y,cols[i].w*W,h,'F')}
+     fnt(isB,fs);col(isHead?K.white:st?kc[st][0]:K.ink);
+     var ls=doc.splitTextToSize(txt,cols[i].w*W-3.2),top=Y+(h-ls.length*lh)/2+lh*0.76;
+     ls.forEach(function(l,k){var ty=top+k*lh;if(cols[i].a==='r')doc.text(l,xs[i]+cols[i].w*W-1.6,ty,{align:'right'});else doc.text(l,xs[i]+1.6,ty)})});
+   }
+   stroke(K.line);doc.setLineWidth(0.12);doc.line(x0,Y+h,x0+W,Y+h);Y+=h}
+  var hdr=head?rows[0]:null,body=head?rows.slice(1):rows;
+  if(head){need(hgt(hdr,true)+hgt(body[0]||hdr,false));drawRow(hdr,true,0)}
+  body.forEach(function(row,i){var h=hgt(row,false);if(Y+h>curH-BOT()){newPage(land);if(head&&!o.noRepeat)drawRow(hdr,true,0)}drawRow(row,false,i+1)});
+  Y+=(o.after==null?3:o.after)}
+ var st=function(k,t){return {t:t||PT[k]||'No data',st:k}};
+ var bold=function(t){return {t:t,b:true}};
+
+ /* ---------- chart helpers ---------- */
+ function hatch(x,y,w,h){fill(K.critBg);doc.rect(x,y,w,h,'F');stroke(K.c9);doc.setLineWidth(0.2);
+  for(var k=1.2;k<w+h;k+=1.6){var t0=Math.max(0,k-w),t1=Math.min(h,k);if(t0<t1)doc.line(x+k-t0,y+t0,x+k-t1,y+t1)}}
+ function stackBars(ins,outs){
+  var W=CW(),sum=function(a){return a.reduce(function(s,x){return s+Math.max(0,x.v)},0)},T_=Math.max(sum(ins),sum(outs),1);
+  [['Water in',ins],['Water used, discharged or stored',outs]].forEach(function(g){
+   var segs=g[1].filter(function(s){return s.v>0}),tot=sum(segs),rows=Math.ceil(segs.length/2);need(9.5+rows*5+12);
+   fnt(1,9.4);col(K.ink);doc.text(Tx(g[0]),ML(),Y+4);fnt(0,9.4);doc.text(fq(tot)+' '+UD()+'',ML()+W,Y+4,{align:'right'});Y+=6;
+   fill(K.bg);doc.rect(ML(),Y,W,7,'F');var x=ML();
+   segs.forEach(function(s){var wd=s.v/T_*W;if(s.hatch)hatch(x,Y,wd,7);else{fill(s.col);doc.rect(x,Y,wd,7,'F')}x+=wd});
+   Y+=10.5;var cw2=W/2;
+   segs.forEach(function(s,i){var cx=ML()+(i%2)*cw2,cy=Y+Math.floor(i/2)*5;
+    if(s.hatch){fill(K.critBg);stroke(K.c9);doc.setLineWidth(0.2);doc.rect(cx,cy-2.4,2.6,2.6,'FD')}else{fill(s.col);doc.rect(cx,cy-2.4,2.6,2.6,'F')}
+    fnt(0,8.4);col(K.ink);doc.text(Tx(s.n),cx+4,cy);col(K.muted);doc.text(f(s.v),cx+cw2-6,cy,{align:'right'})});
+   Y+=rows*5+4})}
+ function scoreBars(rows){var W=CW(),x0=ML()+56,bw=W-56-30;
+  rows.forEach(function(r){need(6.6);fnt(0,9);col(K.ink);doc.text(Tx(r.n),ML(),Y+4);fill(K.bg);doc.roundedRect(x0,Y+1.4,bw,2.4,1.2,1.2,'F');
+   var cc=r.s>=75?K.c5:r.s>=50?K.c6:K.c9;if(r.s>0){fill(cc);doc.roundedRect(x0,Y+1.4,Math.max(2.4,bw*r.s/100),2.4,1.2,1.2,'F')}
+   fnt(1,9);col(K.ink);doc.text(f(r.s),x0+bw+3,Y+4);fnt(0,7.6);col(K.muted);doc.text('weight '+f(r.w*100)+'%',x0+bw+11,Y+4);Y+=6.2});Y+=2}
+ function compareBars(rows){var W=CW(),x0=ML()+46,bw=W-46-26;need(rows.length*17+10);
+  fill(K.c1);doc.rect(ML(),Y+0.6,3,2.4,'F');fnt(0,8.4);col(K.ink);doc.text('Current',ML()+4.5,Y+2.6);
+  fill(K.c5);doc.rect(ML()+22,Y+0.6,3,2.4,'F');doc.text('After adopted measures',ML()+26.5,Y+2.6);
+  stroke(K.crit);doc.setLineWidth(0.45);doc.line(ML()+68,Y+0.2,ML()+68,Y+3.2);doc.text('Target',ML()+70,Y+2.6);Y+=7;
+  rows.forEach(function(r){var mx=Math.max(r.cur,r.aft,r.tgt,0.0001)*1.12;
+   fnt(1,9);col(K.ink);doc.text(Tx(r.lab),ML(),Y+4);fnt(0,8);col(K.muted);doc.text(Tx(r.unit),ML(),Y+8);
+   [[r.cur,K.c1],[r.aft,K.c5]].forEach(function(b,k){var yy=Y+k*5.6;fill(K.bg);doc.rect(x0,yy,bw,4.2,'F');fill(b[1]);doc.rect(x0,yy,bw*b[0]/mx,4.2,'F');fnt(1,8.8);col(K.ink);doc.text(f(b[0],r.d),x0+bw+3,yy+3.3)});
+   var tx=x0+bw*r.tgt/mx;stroke(K.crit);doc.setLineWidth(0.5);doc.line(tx,Y-1,tx,Y+11.2);fnt(0,7.8);col(K.crit);doc.text(f(r.tgt,r.d),tx,Y+14.2,{align:'center'});Y+=17});Y+=1}
+ function vbars(labels,vals,thr){var W=CW(),h=36;need(h+8);var base=Y+h-7,top=Y+4,mx=Math.max.apply(null,vals.concat([thr]))*1.12,slot=(W-14)/vals.length,ph=base-top;
+  stroke(K.line);doc.setLineWidth(0.2);doc.line(ML()+10,base,ML()+W,base);
+  vals.forEach(function(v,i){var x=ML()+12+i*slot,hh=ph*v/mx;fill(v>=thr?K.c5:K.c9);doc.rect(x+slot*0.15,base-hh,slot*0.7,hh,'F');
+   fnt(1,8.4);col(K.ink);doc.text(f(v),x+slot/2,base-hh-1,{align:'center'});fnt(0,8.2);doc.text(Tx(labels[i]),x+slot/2,base+4,{align:'center'})});
+  var ty=base-ph*thr/mx;doc.setLineDashPattern([1,1],0);stroke(K.crit);doc.setLineWidth(0.3);doc.line(ML()+10,ty,ML()+W,ty);doc.setLineDashPattern([],0);
+  fnt(0,7.8);col(K.crit);doc.text(f(thr)+' days',ML()+11,ty-1);Y+=h+3}
+
+ /* ---------- diagram ---------- */
+ function diagramModel(){
+  var s=S.src,u=S.use,rec=S.rec,D=S.dist,o=S.out,Z=function(x){return Math.max(0,x)};
+  var condB=(u.boiler+u.imb)?rec.condReuse*u.boiler/(u.boiler+u.imb):0,condI=rec.condReuse-condB;
+  var etpD=Math.min(rec.etpReuse,u.dom),etpC=rec.etpReuse-etpD,meeC=rec.meeReuse,conc=Z(D.spent-rec.meeGen);
+  var FT=[['dom',48,Z(u.dom-etpD),'Domestic and green belt'],['wash',144,Z(u.wash),'Cane yard and washing'],['imb',216,Z(u.imb-condI),'Milling and imbibition'],['boiler',360,Z(u.boiler-condB),'Boiler and cogeneration'],['coolS',432,Z(u.coolS-etpC),'Cooling and spray pond'],['dProc',554,Z(u.dProc),'Fermentation and distillation'],['dCool',626,Z(u.dCool-meeC),'Distillery cooling tower'],['dDm',698,Z(u.dDm),'Distillery DM plant and boiler']];
+  var FL=[],add=function(name,x1,y1,x2,y2,v,ty,t,lx,ly){FL.push({name:name,x1:x1,y1:y1,x2:x2,y2:y2,v:v,type:ty,t:t||0.5,lx:lx,ly:ly})};
+  [['River, canal or reservoir',s.river],['Groundwater',s.ground],['Harvested rainwater',s.rain],['Municipal or other',s.muni]].forEach(function(r,i){add(r[0]+' to raw water storage',176,127+90*i,250,150+60*i,r[1],'fresh',0.45)});
+  FT.forEach(function(r,i){add('Raw water to '+r[3].toLowerCase(),380,80+i*(360/7),480,r[1],r[2],'fresh',0.72)});
+  add('Unaccounted leaks, overflow and meter error',315,460,315,490,Z(c.unacc),'loss',0.5,350,479);
+  add('Sugar effluent to ETP',690,144,850,76,rec.etpGen,'eff',0.55);
+  add('Treated effluent to land or water',1040,64,1110,64,o.disch,'loss');
+  add('Treated effluent to domestic and green belt',850,52,690,48,etpD,'rec');
+  add('Treated effluent to cooling and spray pond',850,92,690,432,etpC,'rec',0.3);
+  add('Cane condensate from boiling house',690,288,850,288,rec.condGen,'rec');
+  add('Cane condensate to imbibition',850,264,690,216,condI,'rec');
+  add('Cane condensate to boiler',850,312,690,360,condB,'rec');
+  add('Unreused cane condensate',1040,288,1110,288,c.condUnused,'loss');
+  add('Spent wash to evaporator',690,554,850,672,D.spent,'eff',0.55);
+  add('Evaporator condensate to cooling tower',850,708,690,626,meeC,'rec');
+  add('Concentrated spent wash',1040,672,1110,648,conc,'loss');
+  add('Unreused evaporator condensate',1040,708,1110,736,c.meeUnused,'loss');
+  add('Sugar cooling make-up, lost',690,432,1110,418,u.coolS,'loss',0.6);
+  add('Distillery cooling make-up, lost',690,626,1110,398,u.dCool,'loss',0.7);
+  return {FL:FL,condB:condB,condI:condI,etpD:etpD,etpC:etpC,conc:conc};
+ }
+ var DM=diagramModel();
+ var TYC={fresh:K.c1,rec:K.c5,eff:K.c6,loss:K.c9};
+ function drawDiagram(ox,oy,w){
+  var sc=w/1300,s=S.src,u=S.use,rec=S.rec,D=S.dist,o=S.out;
+  var X=function(x){return ox+x*sc},Yy=function(y){return oy+y*sc},fs=function(un){return un*sc/0.3528};
+  function dtext(sx,sy,t,bold,size,color,align){fnt(bold,fs(size));col(color);doc.text(Tx(t),X(sx),Yy(sy),align?{align:align}:undefined)}
+  stroke([174,187,194]);doc.setLineWidth(1.2*sc);doc.setLineDashPattern([6*sc,5*sc],0);
+  doc.roundedRect(X(464),Yy(92),242*sc,392*sc,6*sc,6*sc,'S');doc.roundedRect(X(464),Yy(500),242*sc,250*sc,6*sc,6*sc,'S');doc.setLineDashPattern([],0);
+  [[16,92,'SOURCES'],[250,52,'STORAGE'],[480,12,'USE POINTS'],[850,14,'RECOVERY'],[1110,18,'OUTLETS'],[476,108,'SUGAR HOUSE'],[476,516,'DISTILLERY']].forEach(function(a){dtext(a[0],a[1],a[2],true,10.5,K.muted)});
+  var maxv=Math.max.apply(null,DM.FL.map(function(a){return a.v}).concat([1])),sw=function(v){return Math.max(1.6,v/maxv*14)};
+  doc.setGState(new doc.GState({opacity:0.8,'stroke-opacity':0.8}));
+  DM.FL.forEach(function(a){if(!(a.v>0))return;var cc=TYC[a.type],wd=sw(a.v),L=Math.max(9,wd*1.25),vertical=(a.x1===a.x2),mx=(a.x1+a.x2)/2;
+   var ux=vertical?0:(a.x2>mx?1:-1),uy=vertical?(a.y2>a.y1?1:-1):0,ex=a.x2-ux*L*0.9,ey=a.y2-uy*L*0.9,pts=[];
+   if(vertical){pts=[[a.x1,a.y1],[ex,ey]]}else{for(var i=0;i<=28;i++){var t=i/28,q=1-t;pts.push([q*q*q*a.x1+3*q*q*t*mx+3*q*t*t*mx+t*t*t*ex,q*q*q*a.y1+3*q*q*t*a.y1+3*q*t*t*ey+t*t*t*ey])}}
+   var d=[];for(var j=1;j<pts.length;j++)d.push([(pts[j][0]-pts[j-1][0])*sc,(pts[j][1]-pts[j-1][1])*sc]);
+   stroke(cc);doc.setLineWidth(wd*sc);doc.lines(d,X(pts[0][0]),Yy(pts[0][1]),[1,1],'S',false)});
+  doc.setGState(new doc.GState({opacity:1,'stroke-opacity':1}));
+  DM.FL.forEach(function(a){if(!(a.v>0))return;var cc=TYC[a.type],wd=sw(a.v),L=Math.max(9,wd*1.25),hw=Math.max(5,wd*0.9),vertical=(a.x1===a.x2),mx=(a.x1+a.x2)/2;
+   var ux=vertical?0:(a.x2>mx?1:-1),uy=vertical?(a.y2>a.y1?1:-1):0;fill(cc);
+   doc.triangle(X(a.x2),Yy(a.y2),X(a.x2-ux*L-uy*hw),Yy(a.y2-uy*L-ux*hw),X(a.x2-ux*L+uy*hw),Yy(a.y2-uy*L+ux*hw),'F')});
+  function box(kind,x,y,bw,bh,lines,vals){var fl={src:[K.accSoft,K.c1],rec:[K.goodBg,K.c5],out:[K.critBg,K.c9],'':[K.white,[174,187,194]]}[kind];
+   fill(fl[0]);stroke(fl[1]);doc.setLineWidth(1.3*sc);doc.roundedRect(X(x),Yy(y),bw*sc,bh*sc,4*sc,4*sc,'FD');
+   var n=lines.length+vals.length,y0=y+bh/2-n*15.5/2+11.5;
+   lines.forEach(function(l,i){var size=13.6;fnt(1,fs(size));while(doc.getTextWidth(Tx(l))>(bw-16)*sc&&size>10){size-=0.4;fnt(1,fs(size))}dtext(x+8,y0+i*15.5,l,true,size,K.ink)});
+   vals.forEach(function(l,i){dtext(x+8,y0+(lines.length+i)*15.5,l,false,12.4,K.muted)})}
+  [['River, canal','or reservoir',s.river],['Groundwater','(borewells)',s.ground],['Harvested','rainwater',s.rain],['Municipal','or tanker',s.muni]].forEach(function(r,i){box('src',16,100+90*i,160,54,[r[0],r[1]],[fq(r[2])+' '+UDs()+''])});
+  box('src',250,60,130,400,['Raw water','storage and','treatment'],[f(P.storage)+' m³',f(c.days,1)+' days cover']);
+  box('',480,20,210,56,['Domestic and green belt'],[fq(u.dom)+' '+UDs()+' use']);
+  box('',480,116,210,56,['Cane yard and washing'],[fq(u.wash)+' '+UDs()+' use']);
+  box('',480,188,210,56,['Milling and imbibition'],[fq(u.imb)+' '+UDs()+' use']);
+  box('',480,260,210,56,['Boiling house and evaporators'],['condensate '+fq(rec.condGen)+' '+UDs()+'']);
+  box('',480,332,210,56,['Boiler and cogeneration'],[fq(u.boiler)+' '+UDs()+' use']);
+  box('',480,404,210,56,['Cooling and spray pond'],[fq(u.coolS)+' '+UDs()+' make-up'].concat(S.act.fpv&&S.act.fpv.on?['solar PV cover '+f(P.pvCover)+'%']:[]));
+  box('',480,526,210,56,['Fermentation and distillation'],[fq(u.dProc)+' '+UDs()+' use']);
+  box('',480,598,210,56,['Cooling tower, COC '+f(P.coc,1)],[fq(u.dCool)+' '+UDs()+' make-up']);
+  box('',480,670,210,56,['DM plant and boiler'],[fq(u.dDm)+' '+UDs()+' use']);
+  box('rec',850,248,190,80,['Cane condensate','recovery'],['collected '+fq(rec.condGen)+' '+UDs()+'']);
+  box('rec',850,24,190,80,['Sugar effluent','treatment plant (ETP)'],[fq(rec.etpGen)+' '+UDs()+' treated']);
+  box('rec',850,650,190,80,['Evaporator and CPU','(spent wash)'],[fq(D.spent)+' '+UDs()+' spent wash']);
+  box('out',1110,28,170,72,['Treated effluent','to land or water'],[fq(o.disch)+' '+UDs()+'']);
+  box('out',1110,252,170,72,['Unreused cane','condensate'],[fq(c.condUnused)+' '+UDs()+'']);
+  box('out',1110,372,170,72,['Evaporation, drift','and blowdown'],[fq(u.coolS+u.dCool)+' '+UDs()+'']);
+  box('out',1110,612,170,72,['Concentrated spent','wash: incineration','or compost (ZLD)'],[fq(DM.conc)+' '+UDs()+''+(D.zld==='no'?' | no ZLD':'')]);
+  box('out',1110,700,170,72,['Unreused evaporator','condensate'],[fq(c.meeUnused)+' '+UDs()+'']);
+  box('out',240,490,150,64,['Unaccounted:','leaks, overflow,','meter error'],[fq(c.unacc)+' '+UDs()+'']);
+  DM.FL.forEach(function(a){if(!(a.v>0))return;var lx,ly;
+   if(a.lx!=null){lx=a.lx;ly=a.ly}else{var t=a.t,q=1-t,mx=(a.x1+a.x2)/2;lx=q*q*q*a.x1+3*q*q*t*mx+3*q*t*t*mx+t*t*t*a.x2;ly=q*q*q*a.y1+3*q*q*t*a.y1+3*q*t*t*a.y2+t*t*t*a.y2}
+   var txt=f(a.v);fnt(1,fs(12.4));var tw=doc.getTextWidth(txt);fill(K.white);doc.rect(X(lx)-tw/2-0.5,Yy(ly+4)-12.4*sc*0.78,tw+1,12.4*sc*1.0,'F');
+   dtext(lx,ly+4,txt,true,12.4,K.ink,'center')});
+ }
+
+ /* ================= COVER ================= */
+ fill(K.acc);doc.rect(0,0,210,78,'F');fill([143,195,232]);doc.rect(18,22,22,1.1,'F');
+ fnt(1,10);col(K.white);doc.text('WATER AUDIT REPORT',18,18);
+ fnt(1,26);doc.text('Wastewater recovery, reuse',18,40);doc.text('and water security',18,50);
+ fnt(0,13);col([218,233,243]);doc.text('Sugar mill and ethanol distillery',18,60);
+ fnt(1,11.5);col(K.white);doc.text(Tx(NAME),18,69);fnt(0,9.5);col([218,233,243]);doc.text(Tx('Season '+S.plant.season+'   |   Prepared '+dateStr),18,74.5);
+ Y=88;
+ var tiles=[[f(c.secTotal)+' / 100','Water security index',bd[1]+' rating',bd[0]],[fq(c.fresh)+' '+UD()+'','Fresh water intake',f(c.permitUse)+'% of permitted withdrawal',null],
+  [f(c.lpt)+' L/tcc','Sugar-side fresh water','Target '+f(TG.sugar)+' L per tonne cane',lo(c.lpt,TG.sugar,TG.sugarA)],[P.klpd?f(c.kk,1)+' KL/KL':'n/a','Distillery fresh water','Target '+f(TG.dist,1)+' KL per KL ethanol',P.klpd?lo(c.kk,TG.dist,TG.distA):null],
+  [f(c.recycle)+'%','Recovered water share of use','Target '+f(TG.recycle)+'%',hi(c.recycle,TG.recycle,TG.recycle/2)],[fq(A.adopted)+' '+UD()+'','Saving from the adopted plan',f(pc(A.adopted,c.fresh))+'% of fresh intake',A.adopted>0?'good':null]];
+ tiles.forEach(function(t,i){var x=18+(i%3)*58,y=Y+Math.floor(i/3)*28;fill(K.acc);doc.rect(x,y,54,0.6,'F');
+  fnt(1,17);col(t[3]?kc[t[3]][0]:K.acc);doc.text(Tx(t[0]),x,y+9);fnt(1,8.6);col(K.ink);doc.text(Tx(t[1]),x,y+14.5);fnt(0,7.8);col(K.muted);doc.text(Tx(t[2]),x,y+18.5)});
+ Y+=62;
+ if(!S.edited)note('**Basis of this report.** The figures are the example plant data that ships with the tool, so that every section can be seen working. They are not measurements from a real plant. Enter your measured flows on the Plant & flows tab and download the report again.','warn');
+ else note('**Basis of this report.** Prepared from the plant data entered in the Cane Water Audit tool on '+dateStr+'. Effluent limits, fresh-water targets and costs are indicative defaults unless you replaced them, and must be checked against the Consent to Operate and supplier quotations.','acc');
+ Y+=2;small('Contents: executive summary, scope and method, water balance, whole-plant process diagram, recovery and reuse, effluent compliance, water security and drought stress test, audit checklist, action plan with a solar PV study for the spray pond, implementation roadmap, assumptions and calculation methods.');
+
+ /* page 2 is reserved for the contents list, filled in at the end */
+ newPage(false);var tocPage=pageNo();
+
+ /* ================= 1 EXECUTIVE SUMMARY ================= */
+ newPage(false);
+ h1('1. Executive summary');
+ var clos=Math.abs(c.closure);
+ para('**'+NAME+'** crushes '+f(P.tcd)+' tonnes of cane a day for '+f(P.days)+' days'+(P.klpd?' and distils '+f(P.klpd)+' KL of ethanol a day':'')+'. It draws **'+fq(c.fresh)+' '+UD()+'** of fresh water and recovers a further **'+fq(c.recov)+' '+UD()+'**, so recovered water meets **'+f(c.recycle)+'%** of total use. The water balance closes within '+f(clos,1)+'%, '+(clos<=5?'inside the 5% target, so the figures that follow can be relied on.':'above the 5% target, so treat the figures that follow with caution.'),{size:10.6,after:3});
+ var sentS=c.lpt<=TG.sugar?'Sugar-side fresh water is '+f(c.lpt)+' L/tcc, inside the '+f(TG.sugar)+' L/tcc target.':'Sugar-side fresh water is '+f(c.lpt)+' L/tcc'+(TG.sugar>0?', '+(c.lpt/TG.sugar).toFixed(1)+' times the '+f(TG.sugar)+' L/tcc target.':'.');
+ var sentD=P.klpd?(c.kk<=TG.dist?' The distillery uses '+f(c.kk,1)+' KL of fresh water per KL of ethanol, inside the target of '+f(TG.dist,1)+'.':' The distillery uses '+f(c.kk,1)+' KL of fresh water per KL of ethanol against a target of '+f(TG.dist,1)+'.'):'';
+ var sentC=c.condUnused>0?' The plant generates '+fq(S.rec.condGen)+' '+UD()+' of cane condensate and reuses '+f(S.rec.condReuse)+', so '+fq(c.condUnused)+' '+UD()+' goes unused.':' All cane condensate generated is reused.';
+ var sentE=(S.out.disch>0?' It discharges '+fq(S.out.disch)+' '+UD()+' of treated effluent that could replace fresh make-up':' It discharges no treated effluent')+(c.ef.tot?', and '+c.ef.pass+' of '+c.ef.tot+' effluent readings are within limit.':'.');
+ para('**Where the plant stands.** '+sentS+sentD+sentC+sentE+' Raw water storage covers '+f(c.days,1)+' days of demand. The water security index is **'+f(c.secTotal)+' out of 100 ('+bd[1]+')**.',{after:3});
+ var solarMost=R.fpv&&R.fpv.on&&A.saveRs>0&&R.fpv.ers>A.saveRs/2;
+ if(nAd>0)para('**What the plan achieves.** The '+nAd+' measure'+(nAd>1?'s':'')+' ticked in the action plan save **'+fq(A.adopted)+' '+UD()+'** ('+f(pc(A.adopted,c.fresh))+'% of fresh intake). They cost about ₹'+f(A.capex)+' lakh and return about ₹'+f(A.saveRs,1)+' lakh a year'+(solarMost?', most of it from solar power':'')+'. Sugar-side fresh water goes from '+f(c.lpt)+' to '+f(A.lpt)+' L/tcc'+(P.klpd?' and distillery fresh water from '+f(c.kk,1)+' to '+f(A.kk,1)+' KL/KL':'')+'. '+((A.lpt>TG.sugar||(P.klpd&&A.kk>TG.dist))?'At least one of these is still above target. ':'Both reach their targets. ')+'Adopting all '+ACT.length+' measures takes sugar-side use to '+f(AA.lpt)+' L/tcc'+(P.klpd?' and distillery use to '+f(AA.kk,1)+' KL/KL':'')+' (section 9.2).',{after:3});
+ else para('**What the plan achieves.** No measure is ticked in the action plan yet. Adopting all '+ACT.length+' measures would save about '+fq(AA.adopted)+' '+UD()+' and take sugar-side use to '+f(AA.lpt)+' L/tcc (section 9.2).',{after:3});
+ h2('Key findings');
+ var fl=findings(c),frows=[[{t:'Severity'},{t:'Finding'}]];
+ fl.forEach(function(x){frows.push([st(x.k,x.k==='crit'?'Action':'Watch'),x.t])});
+ if(!fl.length)frows.push([st('good','Clear'),'No gaps found against the current targets.']);
+ table([{w:0.13},{w:0.87}],frows,{fs:8.6});
+ h2('Audit scorecard');
+ var sc=[['Measure','Actual','Target','Status']];
+ var addS=function(m,a,un,t,k){sc.push([m,a+' '+un,t,st(k)])};
+ addS('Sugar-side fresh water',f(c.lpt),'L/tcc','<= '+f(TG.sugar),lo(c.lpt,TG.sugar,TG.sugarA));
+ if(P.klpd){addS('Distillery fresh water',f(c.kk,1),'KL/KL','<= '+f(TG.dist,1),lo(c.kk,TG.dist,TG.distA));addS('Spent wash generated',f(c.spent,1),'KL/KL','<= '+f(TG.spent,1),lo(c.spent,TG.spent,TG.spent*1.25))}
+ addS('Sugar effluent generated',f(c.efflLpt),'L/tcc','<= '+f(TG.effl),lo(c.efflLpt,TG.effl,TG.effl*1.5));
+ addS('Recovered water share of use',f(c.recycle),'%','>= '+f(TG.recycle),hi(c.recycle,TG.recycle,TG.recycle/2));
+ addS('Water balance closure error',f(clos,1),'%','<= 5',lo(clos,5,10));
+ addS('Cooling tower cycles',f(P.coc,1),'COC','>= '+f(P.cocT,1),hi(P.coc,P.cocT,P.cocT*0.7));
+ addS('Raw water storage',f(c.days,1),'days','>= 15',hi(c.days,15,7));
+ addS('Intake against permit',f(c.permitUse),'%','<= 90',lo(c.permitUse,90,100));
+ addS('Major use points metered',f(P.meter),'%','>= 90',hi(P.meter,90,60));
+ sc.push(['Effluent readings within limit',c.ef.pass+' of '+c.ef.tot,'all',c.ef.tot?st(c.ef.fail?'crit':'good',c.ef.fail?'Action':'On target'):st('none','No data')]);
+ sc.push(['Checklist compliance',(cl.answered?f(cl.score):'-')+' %','>= 80',cl.answered?st(hi(cl.score,80,60)):st('none','No data')]);
+ table([{w:0.42},{w:0.22,a:'r'},{w:0.16,a:'r'},{w:0.2}],sc);
+
+ /* ================= 2 SCOPE ================= */
+ need(120);h1('2. Scope, method and data basis');
+ para('The audit covers the whole site: the sugar house, the ethanol distillery, the boiler and cogeneration plant, the cooling systems, effluent treatment and the domestic and green belt demand. All flows are season-average daily values in '+UD()+'. Annual and seasonal figures multiply by the '+f(P.days)+' crushing days, except solar power, which is counted over the full year.');
+ h2('Method');
+ bullets(['**Water balance.** Water in (fresh plus recovered) is set against water used, discharged and stored. The remainder is unaccounted flow, and its share of inflow is the closure error.',
+  '**Intensity indicators.** Sugar-side fresh water per tonne of cane (L/tcc), distillery fresh water per KL of ethanol, spent wash per KL of ethanol and recovered share of use, compared with the plant targets.',
+  '**Process diagram.** Every source, use point, recovery loop and outlet is drawn from the same inputs, with line thickness proportional to flow.',
+  '**Effluent compliance.** Latest outlet readings are compared with the limits entered for the sugar ETP and the distillery condensate polishing unit.',
+  '**Water security index.** Eight weighted factors scored 0 to 100, plus a drought stress test on fresh supply.',
+  '**Audit checklist.** '+CL.reduce(function(s,g){return s+g.i.length},0)+' items rated compliant, partial or not in place.',
+  '**Action plan.** '+ACT.length+' measures sized from the plant\'s own flows, with capital cost, saving and payback.']);
+ h2('Data used');
+ var L1=[{group:'Plant profile'},['Cane crushed (t/day)',f(P.tcd)],['Crushing days per season',f(P.days)],['Ethanol (KL/day)',f(P.klpd)],['Distillery share of fresh water (%)',f(P.distShare)],
+  {group:'Fresh water intake ('+UD()+')'},['River, canal or reservoir',fq(S.src.river)],['Groundwater',fq(S.src.ground)],['Harvested rainwater',fq(S.src.rain)],['Municipal or other',fq(S.src.muni)],['Permitted withdrawal',fq(P.permit)],['Raw water storage (m³)',f(P.storage)],
+  {group:'Recovered water ('+UD()+')'},['Cane condensate generated / reused',fq(S.rec.condGen)+' / '+fq(S.rec.condReuse)],['Treated sugar effluent generated / reused',fq(S.rec.etpGen)+' / '+fq(S.rec.etpReuse)],['Evaporator condensate generated / reused',fq(S.rec.meeGen)+' / '+fq(S.rec.meeReuse)]];
+ var L2=[{group:'Use in the sugar house ('+UD()+')'},['Boiler make-up',fq(S.use.boiler)],['Imbibition and process',fq(S.use.imb)],['Cooling and spray pond make-up',fq(S.use.coolS)],['Washing and cleaning',fq(S.use.wash)],
+  {group:'Use in the distillery and site ('+UD()+')'},['Process and mash dilution',fq(S.use.dProc)],['Cooling tower make-up',fq(S.use.dCool)],['DM plant and boiler',fq(S.use.dDm)],['Domestic and green belt',fq(S.use.dom)],
+  {group:'Discharge and systems'},['Treated effluent discharged ('+UD()+')',fq(S.out.disch)],['Spent wash generated ('+UD()+')',fq(S.dist.spent)],['Zero liquid discharge',S.dist.zld==='yes'?'In place':'Not in place'],['Cooling tower cycles (measured / target)',f(P.coc,1)+' / '+f(P.cocT,1)],['Major use points metered (%)',f(P.meter)],['Cost of fresh water (₹/m³)',f(P.cost)]];
+ need(100);var yTop=Y,half=(CW()-6)/2;
+ table([{w:0.68},{w:0.32,a:'r'}],[['Item','Value']].concat(L1),{x:ML(),w:half,fs:7.8,pad:1.1,noRepeat:true,after:0});var y1=Y;Y=yTop;
+ table([{w:0.68},{w:0.32,a:'r'}],[['Item','Value']].concat(L2),{x:ML()+half+6,w:half,fs:7.8,pad:1.1,noRepeat:true,after:0});Y=Math.max(y1,Y)+3;
+ small('Targets used: sugar-side fresh water '+f(TG.sugar)+' L/tcc (alert '+f(TG.sugarA)+'), distillery fresh water '+f(TG.dist,1)+' KL/KL (alert '+f(TG.distA,1)+'), spent wash '+f(TG.spent,1)+' KL/KL, sugar effluent '+f(TG.effl)+' L/tcc, recovered share '+f(TG.recycle)+'%. These and every effluent limit in section 6 are indicative defaults and must be replaced by the limits in the plant\'s Consent to Operate.');
+
+ /* ================= 3 WATER BALANCE ================= */
+ need(110);h1('3. Water balance');
+ para('Everything entering the plant, fresh or recovered, is set against everything the plant uses, discharges or stores. The remainder is water the meters do not explain.');
+ stackBars([{n:'River, canal or reservoir',v:S.src.river,col:K.c1},{n:'Groundwater',v:S.src.ground,col:K.c2},{n:'Harvested rainwater',v:S.src.rain,col:K.c3},{n:'Municipal or other',v:S.src.muni,col:K.c4},{n:'Recovered: cane condensate',v:S.rec.condReuse,col:K.c5},{n:'Recovered: treated effluent',v:S.rec.etpReuse,col:[95,174,123]},{n:'Recovered: evaporator condensate',v:S.rec.meeReuse,col:[140,203,159]}],
+  [{n:'Sugar house',v:c.useS,col:K.c6},{n:'Distillery',v:c.useD,col:K.c7},{n:'Domestic and green belt',v:c.useO,col:K.c8},{n:'Treated effluent discharged',v:S.out.disch,col:K.c9},{n:'Storage filling',v:Math.max(0,S.out.stor),col:K.c10},{n:'Unaccounted',v:Math.max(0,c.unacc),hatch:true}]);
+ para('**Closure.** Inflow is '+fq(c.inputs)+' '+UD()+' and accounted outflow is '+fq(c.uses+S.out.disch+S.out.stor)+' '+UD()+', '+(c.unacc>=0?'leaving '+fq(c.unacc)+' '+UD()+' unaccounted':'so uses exceed inflow by '+fq(-c.unacc)+' '+UD()+'')+'. That is a closure error of '+f(clos,1)+'%, '+(clos<=5?'inside':'above')+' the 5% target. '+(P.meter<90?'Only '+f(P.meter)+'% of major use points are metered, so part of the gap is likely meter error and part leakage and overflow, and the two cannot be separated until sub-meters are fitted.':'Most use points are metered, so the gap points to leakage, overflow or meter calibration.'));
+ var brow=[['Section / use',UD(),'Share of use']],shr=function(v){return f(pc(v,c.uses))+'%'};
+ [['Sugar house',c.useS,[['Boiler make-up','boiler'],['Imbibition and process','imb'],['Cooling and spray pond make-up','coolS'],['Washing and cleaning','wash']]],['Distillery',c.useD,[['Process and mash dilution','dProc'],['Cooling tower make-up','dCool'],['DM plant and boiler','dDm']]],['Domestic and green belt',c.useO,[]]].forEach(function(g){
+  brow.push([bold(g[0]),bold(fq(g[1])),bold(shr(g[1]))]);g[2].forEach(function(it){brow.push(['   '+it[0],fq(S.use[it[1]]),shr(S.use[it[1]])])})});
+ table([{w:0.55},{w:0.22,a:'r'},{w:0.23,a:'r'}],brow);
+ h2('Intensity indicators');
+ table([{w:0.5},{w:0.15,a:'r'},{w:0.15,a:'r'},{w:0.2}],[['Indicator','Value','Target','Reading'],
+  ['Sugar fresh water, L per tonne cane',f(c.lpt),f(TG.sugar),st(lo(c.lpt,TG.sugar,TG.sugarA))],
+  ['Distillery fresh water, KL per KL ethanol',f(c.kk,1),f(TG.dist,1),st(P.klpd?lo(c.kk,TG.dist,TG.distA):'none')],
+  ['Spent wash, KL per KL ethanol',f(c.spent,1),f(TG.spent,1),st(P.klpd?lo(c.spent,TG.spent,TG.spent*1.25):'none')],
+  ['Sugar effluent, L per tonne cane',f(c.efflLpt),f(TG.effl),st(lo(c.efflLpt,TG.effl,TG.effl*1.5))],
+  ['Fresh water per season, ML',f(c.fresh*P.days/1000),'-',st('none','Reference')]]);
+ small('Fresh water is split between sugar and distillery with the distillery share of '+f(P.distShare)+'% entered in the data. A sub-meter on the distillery intake would replace that assumption with a measured figure.');
+
+ /* ================= 4 PROCESS DIAGRAM (landscape) ================= */
+ newPage(true);
+ fnt(1,20);col(K.acc);doc.text('4. Whole-plant process diagram',ML(),24);toc.push([0,'4. Whole-plant process diagram',pageNo()]);
+ var lx=ML();[[K.c1,'Fresh water',22],[K.c5,'Recovered and reused',36],[K.c6,'Sent to treatment',30],[K.c9,'Outlets and losses',30]].forEach(function(l){stroke(l[0]);doc.setLineWidth(1);doc.line(lx,30,lx+7,30);fnt(0,8.6);col(K.ink);doc.text(l[1],lx+9,31);lx+=l[2]+14});
+ fnt(0,8.4);col(K.muted);doc.text('Line thickness follows flow. Labels are '+UD()+'.',lx+4,31);
+ drawDiagram(ML()+6,34,258);
+ newPage(false);
+ h2('4.1 Flow register');
+ para('The streams in the diagram, grouped by type, for the audit file.');
+ var TLm={fresh:['none','Fresh water'],rec:['good','Recovered or reused'],eff:['warn','To treatment'],loss:['crit','Outlet or loss']},ordr={fresh:0,rec:1,eff:2,loss:3};
+ var reg=[['Stream',UD(),'Type']];
+ DM.FL.filter(function(a){return a.v>0}).sort(function(a,b){return ordr[a.type]-ordr[b.type]}).forEach(function(a){reg.push([a.name,fq(a.v),st(TLm[a.type][0],TLm[a.type][1])])});
+ table([{w:0.6},{w:0.15,a:'r'},{w:0.25}],reg);
+ h2('4.2 How the diagram is drawn');
+ para('The inputs record how much recovered water each stream supplies, not where it goes, so the diagram assumes the following allocation:');
+ bullets(['Cane condensate goes to the boiler ('+fq(DM.condB)+' '+UD()+') and to imbibition ('+fq(DM.condI)+' '+UD()+') in proportion to their use.',
+  'Treated effluent goes to domestic and green belt first ('+fq(DM.etpD)+' '+UD()+'), then to cooling and the spray pond ('+fq(DM.etpC)+' '+UD()+').',
+  'Evaporator condensate goes to the distillery cooling tower ('+fq(S.rec.meeReuse)+' '+UD()+').',
+  'Fresh water supplies what is left at each use point.',
+  'Cooling make-up is drawn as an outlet because most of it leaves as evaporation, drift and blowdown.',
+  'Storage change of '+fq(S.out.stor)+' '+UD()+' is not drawn. Unaccounted flow ('+fq(c.unacc)+' '+UD()+') is drawn from the raw water storage block.']);
+
+ /* ================= 5 RECOVERY ================= */
+ need(120);h1('5. Recovery and reuse');
+ para('The plant recovers '+fq(c.recov)+' '+UD()+'. Three streams hold the rest of the opportunity: cane condensate, treated sugar effluent and evaporator condensate.');
+ var rr=[['Stream','Generated','Reused','Not reused','Reused %','Reading']],gT=0;
+ [['Cane condensate',S.rec.condGen,S.rec.condReuse],['Treated sugar effluent',S.rec.etpGen,S.rec.etpReuse],['Evaporator condensate',S.rec.meeGen,S.rec.meeReuse]].forEach(function(r){var p_=pc(r[2],r[1]);gT+=r[1];
+  rr.push([r[0],fq(r[1]),fq(r[2]),fq(Math.max(0,r[1]-r[2])),f(p_),r[1]>0?st(p_>=85?'good':p_>=60?'warn':'crit',p_>=85?'Good':p_>=60?'Partial':'Low'):st('none','No data')])});
+ rr.push([bold('Total'),bold(fq(gT)),bold(fq(c.recov)),bold(fq(c.condUnused+c.etpUnused+c.meeUnused)),bold(f(pc(c.recov,gT))),'']);
+ table([{w:0.26},{w:0.14,a:'r'},{w:0.13,a:'r'},{w:0.15,a:'r'},{w:0.14,a:'r'},{w:0.18}],rr);
+ h2('Cane condensate');
+ para(c.condUnused>0?'Condensate is the cleanest water on a sugar site. The mill generates '+fq(S.rec.condGen)+' '+UD()+' and reuses '+fq(S.rec.condReuse)+', so '+fq(c.condUnused)+' '+UD()+' ('+f(pc(c.condUnused,S.rec.condGen))+'% of generation) is lost to drain or the spray pond while the plant draws fresh water for boiler feed and imbibition. Returning it all removes '+fq(R.cond.sv)+' '+UD()+' of fresh demand, '+f(pc(R.cond.sv,c.freshS))+'% of the sugar-side intake.':'All cane condensate generated ('+fq(S.rec.condGen)+' '+UD()+') is reused. Keep the conductivity and sugar carry-over checks in place so reuse stays safe for the boilers.');
+ h2('Treated sugar effluent');
+ para('The ETP treats '+fq(S.rec.etpGen)+' '+UD()+' ('+f(c.efflLpt)+' L/tcc against a norm of '+f(TG.effl)+'). '+fq(S.rec.etpReuse)+' '+UD()+' is reused and '+fq(S.out.disch)+' '+UD()+' is discharged to land or water. After tertiary polishing, about 60% of the discharge, '+fq(R.etp.sv)+' '+UD()+', can serve cooling make-up, ash conditioning and the green belt.'+(c.ef.fail?' Some effluent readings are over limit (section 6), so polishing has to follow a fix to the ETP itself.':''));
+ if(P.klpd){h2('Distillery evaporator condensate');
+  para('Spent wash of '+fq(S.dist.spent)+' '+UD()+' ('+f(c.spent,1)+' KL/KL against a target of '+f(TG.spent,1)+') is concentrated in the evaporator, which yields '+fq(S.rec.meeGen)+' '+UD()+' of condensate. '+fq(S.rec.meeReuse)+' '+UD()+' is reused and '+fq(c.meeUnused)+' '+UD()+' is not. Condensate that passes a COD and conductivity check can replace cooling tower make-up and dilution water, and the rest can go through the condensate polishing unit first.')}
+ var pot=c.condUnused+c.meeUnused+R.etp.sv;
+ note('**Recovery potential.** Closing the three gaps recovers about '+fq(pot)+' '+UD()+', '+f(pc(pot,c.fresh))+'% of today\'s fresh intake. That would lift the recovered share of use from '+f(c.recycle)+'% to about '+f(pc(c.recov+pot,c.uses))+'%, '+(pc(c.recov+pot,c.uses)>=TG.recycle?'above':'still below')+' the '+f(TG.recycle)+'% target.','acc');
+
+ /* ================= 6 EFFLUENT ================= */
+ need(110);h1('6. Effluent quality and compliance');
+ para('Latest outlet readings are compared with the limits entered for each disposal or reuse route. A reading counts as near the limit above 90% of the limit.');
+ var er=[['Parameter','Unit','Sugar limit','Sugar ETP','Status','Distillery limit','Distillery CPU','Status']],effl=[];
+ EFP.forEach(function(p){var e=S.ef[p.k],d=p.k==='ph'?1:0;
+  var stt=function(z){var s_=efSt(p,e[z+'v'],e[z+'l']);if(s_==='crit'||s_==='warn')effl.push({p:p,z:z,s:s_,v:e[z+'v'],l:e[z+'l']});return s_==='none'?st('none','No data'):s_==='crit'?st('crit','Exceeds'):s_==='warn'?st('warn','Near limit'):st('good','Within')};
+  er.push([p.n+(p.k==='ph'?' (min 5.5)':''),p.u||'-',fv(e.sl,d),fv(e.sv,d),stt('s'),fv(e.dl,d),fv(e.dv,d),stt('d')])});
+ table([{w:0.22},{w:0.08},{w:0.1,a:'r'},{w:0.1,a:'r'},{w:0.13},{w:0.11,a:'r'},{w:0.12,a:'r'},{w:0.14}],er,{fs:7.8});
+ small('Limits are indicative placeholders. Replace them with the limits in the plant\'s Consent to Operate and the standard for each disposal or reuse route.');
+ h2('Position');
+ var pb=[];
+ pb.push(c.ef.tot?c.ef.pass+' of '+c.ef.tot+' readings are within limit.'+(c.ef.fail?' Over the limit: '+effl.filter(function(x){return x.s==='crit'}).map(function(x){return (x.z==='s'?'Sugar ETP ':'Distillery CPU ')+x.p.n+' at '+f(x.v,x.p.k==='ph'?1:0)+' against '+f(x.l,x.p.k==='ph'?1:0)}).join('; ')+'.':' No reading exceeds its limit.'):'No effluent readings have been entered yet.');
+ var nl=effl.filter(function(x){return x.s==='warn'});if(nl.length)pb.push('Close to the limit (above 90%): '+nl.map(function(x){return (x.z==='s'?'Sugar ETP ':'Distillery CPU ')+x.p.n+' at '+f(x.v)+' against '+f(x.l)}).join('; ')+'. There is little margin.');
+ pb.push('Sugar effluent generation of '+f(c.efflLpt)+' L/tcc is '+(c.efflLpt<=TG.effl?'inside':'above')+' the '+f(TG.effl)+' L/tcc norm.'+(P.klpd?' The distillery is '+(S.dist.zld==='yes'?'at':'not at')+' zero liquid discharge, with '+fq(DM.conc)+' '+UD()+' of concentrated spent wash going to incineration or composting.':''));
+ pb.push('Treated water that is reused must meet the quality needed by its use. Cooling make-up needs low hardness and conductivity, and land application needs TDS and sodium checks.');
+ bullets(pb);
+ h2('Corrective steps');
+ if(effl.length){var seen={},cs=[];effl.forEach(function(x){if(!seen[x.p.k]){seen[x.p.k]=1;cs.push(EFX[x.p.k])}});cs.push('Re-sample after each correction at the frequency set in the consent, using an accredited lab, and keep the results with checklist items r3 and e3.');bullets(cs)}
+ else bullets(['No corrective action is needed on current readings. Keep sampling at the consent frequency with an accredited lab and keep the results with checklist items r3 and e3.']);
+
+ /* ================= 7 WATER SECURITY ================= */
+ need(110);h1('7. Water security');
+ para('The index combines eight factors that decide whether the plant can keep running through a dry year. It is a screening score for comparing seasons and choosing where to act first, not a forecast.');
+ var ss=c.sec.slice().sort(function(a,b){return a.s-b.s});
+ note('**Index '+f(c.secTotal)+' out of 100, '+bd[1]+'.** Strongest factors: '+ss.slice(-2).reverse().map(function(x){return x.n.toLowerCase()}).join(' and ')+'. Weakest: '+ss.slice(0,3).map(function(x){return x.n.toLowerCase()}).join(', ')+'.',bd[0]);
+ scoreBars(c.sec.map(function(p){return {n:p.n,s:p.s,w:p.w}}));
+ table([{w:0.27},{w:0.09,a:'r'},{w:0.64}],[['Factor','Score','Basis']].concat(c.sec.map(function(p){return [p.n,f(p.s),p.d]})),{fs:8});
+ h2('Drought stress test');
+ para('The test cuts the fresh water available and asks how long raw water storage covers the shortfall and how much of it the adopted measures close. The crushing season is '+f(P.days)+' days.');
+ var cuts=[10,20,30,40,50,60],sr=[['Supply cut','Supply left, '+UD(),'Shortfall, '+UD(),'Storage covers','Adopted measures close','Reading']],sv_=[];
+ cuts.forEach(function(cu){var gap=c.fresh*cu/100,d_=gap>0?P.storage/gap:0;sv_.push(d_);var cl_=Math.min(100,pc(A.adopted,gap));
+  sr.push([cu+'%',fq(c.fresh-gap),fq(gap),f(d_)+' days',f(cl_)+'%',st(d_>=P.days?'good':d_>=30?'warn':'crit',d_>=P.days?'Full season':d_>=30?'Part season':'Under a month')])});
+ table([{w:0.12},{w:0.19,a:'r'},{w:0.17,a:'r'},{w:0.16,a:'r'},{w:0.2,a:'r'},{w:0.16}],sr,{fs:8.2});
+ vbars(cuts.map(function(x){return x+'% cut'}),sv_,15);
+ var g30=c.fresh*0.3,d30=g30>0?P.storage/g30:0;
+ para('At a 30% cut the shortfall is '+fq(g30)+' '+UD()+' and storage lasts '+f(d30)+' days, '+(d30>=P.days?'enough for the '+f(P.days)+'-day season. ':'short of a '+f(P.days)+'-day season. ')+'The adopted measures would close about '+f(Math.min(100,pc(A.adopted,g30)))+'% of that shortfall, which is why they count as drought protection as well as savings.'+(d30<P.days?' The remaining gap needs a drought plan with trigger levels, an alternate source and priority users (checklist item w1), plus more storage.':''));
+
+ /* ================= 8 CHECKLIST ================= */
+ need(110);h1('8. Audit checklist');
+ para('**Score '+(cl.answered?f(cl.score)+'%':'not assessed')+'** against the 80% target. '+cl.y+' items are compliant, '+cl.pt+' partial, '+cl.no+' not in place and '+cl.un+' not assessed. Partial items count at half. '+cl.keyNo.length+' of the '+cl.no+' not-in-place items are marked key.');
+ var ck=[['Item','Status']];
+ CL.forEach(function(g){ck.push({group:g.g});g.i.forEach(function(it){var s_=(S.cl[it.id]||{}).s||'';ck.push([it.t+(it.k?'  [KEY]':''),st(s_==='yes'?'good':s_==='part'?'warn':s_==='no'?'crit':'none',STL[s_])])})});
+ table([{w:0.8},{w:0.2}],ck,{fs:8.2,pad:1.2});
+ var gaps=[],parts=[];CL.forEach(function(g){g.i.forEach(function(it){var s_=(S.cl[it.id]||{}).s||'';if(s_==='no')gaps.push(it);else if(s_==='part')parts.push(it)})});
+ if(gaps.length+parts.length){need(40);h2('Items to close');small('Not-in-place items first, then partial items.');
+  var cr=[['Item','Status','Next step']];gaps.concat(parts).forEach(function(it){var n_=gaps.indexOf(it)>=0;cr.push([it.t,st(n_?'crit':'warn',n_?'Not in place':'Partial'),(S.cl[it.id]&&S.cl[it.id].n?S.cl[it.id].n+' | ':'')+CLSTEP[it.id]])});
+  table([{w:0.45},{w:0.13},{w:0.42}],cr,{fs:7.8})}
+
+ /* ================= 9 ACTION PLAN ================= */
+ need(120);h1('9. Action plan');
+ h2('9.1 Measures and economics');
+ para('Savings come from the plant\'s own flows and are indicative. Water is valued at ₹'+f(P.cost)+' per m³ over '+f(P.days)+' crushing days, and solar power at ₹'+f(P.tariff,1)+' per kWh over the full year. Costs for measures other than solar PV are the values entered in the tool and must be replaced by quotations.');
+ var ar=[['Measure','Plan','Saves '+UD(),'Cost ₹ lakh','Benefit ₹ lakh/yr','Payback months']];
+ A.rows.forEach(function(r){ar.push([r.a.t,r.on?'Adopt':'Later',fq(r.sv),f(r.capex),f(r.rs,1),pbf(r.pb)])});
+ ar.push([bold('Adopted plan'),'',bold(fq(A.adopted)),bold(f(A.capex)),bold(f(A.saveRs,1)),bold(A.saveRs>0?f(A.capex/A.saveRs*12):'-')]);
+ ar.push([bold('All '+ACT.length+' measures'),'',bold(fq(AA.adopted)),bold(f(AA.capex)),bold(f(AA.saveRs,1)),bold(AA.saveRs>0?f(AA.capex/AA.saveRs*12):'-')]);
+ table([{w:0.47},{w:0.08},{w:0.11,a:'r'},{w:0.1,a:'r'},{w:0.13,a:'r'},{w:0.11,a:'r'}],ar,{fs:8});
+ small('The savings of separate measures overlap slightly, for example condensate reuse and leak repair draw on the same fresh demand, so the combined figures are an upper estimate. Solar PV is the largest benefit by value but the smallest by water, as section 9.4 explains.');
+ h2('9.2 Result of the plan');
+ table([{w:0.34},{w:0.15,a:'r'},{w:0.17,a:'r'},{w:0.17,a:'r'},{w:0.17,a:'r'}],[['Indicator','Today','Adopted plan','All measures','Target'],
+  ['Fresh intake, '+UD(),fq(c.fresh),fq(freshAfter),fq(freshAll),'-'],['Sugar fresh water, L/tcc',f(c.lpt),f(A.lpt),f(AA.lpt),f(TG.sugar)],['Distillery fresh water, KL/KL',f(c.kk,1),f(A.kk,1),f(AA.kk,1),f(TG.dist,1)],
+  ['Raw water storage cover, days',f(c.days,1),f(daysAfter,1),f(freshAll>0?P.storage/freshAll:0,1),'>= 15'],['Capital, ₹ lakh','-',f(A.capex),f(AA.capex),'-'],['Benefit, ₹ lakh/year','-',f(A.saveRs,1),f(AA.saveRs,1),'-']]);
+ var cmpRows=[{lab:'Sugar fresh water',cur:c.lpt,aft:A.lpt,tgt:TG.sugar,unit:'L per tonne cane',d:0}];
+ if(P.klpd)cmpRows.push({lab:'Distillery fresh water',cur:c.kk,aft:A.kk,tgt:TG.dist,unit:'KL per KL ethanol',d:1});
+ compareBars(cmpRows);
+ var missS=A.lpt>TG.sugar,missAll=AA.lpt>TG.sugar;
+ para((missS||(P.klpd&&A.kk>TG.dist))?'At least one indicator does not reach its target with the adopted plan'+(missAll?', and the sugar side stays about '+(TG.sugar>0?(AA.lpt/TG.sugar).toFixed(1):'-')+' times its target even with all '+ACT.length+' measures':'')+'. '+(missAll?'Reaching '+f(TG.sugar)+' L/tcc needs a second phase: full condensate reuse, treated effluent in cooling, a closed spray pond loop and a tighter imbibition target.':'Adopting the remaining measures closes the gap.'):'Both indicators reach their targets with the adopted plan.');
+
+ need(70);h2('9.3 Measure details');
+ function det(id){var u=S.use,rec=S.rec,ro=R[id];
+  var D={
+  cond:['Collect vapour condensate from the evaporators and pans in a segregated header. Send clean condensate to boiler feed through the deaerator and to hot imbibition. Send condensate with sugar carry-over to cooling make-up after a check.',['Meter the condensate header and each user so the balance is measured, not estimated.','Fit conductivity and sugar carry-over alarms with a divert valve at the hot well.','Re-pipe any condensate going to drain or the spray pond to the boiler feed system.','Set imbibition to take condensate first and fresh water only as a top-up.'],'Unreused condensate ('+fq(c.condUnused)+' '+UD()+'), limited to sugar-side fresh water.','Sugar carry-over causes boiler foaming and scale. Keep a divert path and test every shift in the first season.'],
+  coc:['Raise the cooling tower cycles of concentration from '+f(P.coc,1)+' to '+f(P.cocT,1)+' by controlling blowdown on conductivity and running a proper scale and corrosion programme.',['Fit conductivity-controlled blowdown and log cycles weekly.','Set scale, corrosion and biocide dosing for the target cycles.','Use condensate or softened water as make-up where possible.','Check chloride limits for the condenser tube material before going above 4.5 cycles.'],'Make-up scales with C/(C-1). Going from '+f(P.coc,1)+' to '+f(P.cocT,1)+' cycles cuts make-up of '+fq(u.dCool)+' '+UD()+' by '+f(pc(ro.sv,u.dCool))+'%.','Scaling and corrosion rise with cycles, and chemical cost rises with them.'],
+  mee:['Route all evaporator condensate to cooling make-up, fermentation dilution and equipment cleaning after quality checks. Polish any condensate that fails the check through the CPU.',['Test COD and conductivity weekly and set accept and divert limits.','Install a dedicated condensate tank and pumps to the cooling tower make-up line.','Replace fresh water in mash dilution first, because that use is the least sensitive to conductivity.'],'Unreused evaporator condensate ('+fq(c.meeUnused)+' '+UD()+'), limited to distillery fresh water.','Volatile acids and COD can foul the cooling system. Do not bypass the quality check.'],
+  etp:['Add tertiary polishing (filtration and disinfection, with RO if hardness or TDS demands it) and connect the treated water to cooling make-up, ash conditioning and the green belt.',['Fix any ETP exceedances first.','Size polishing for about 60% of the discharge, '+fq(ro.sv)+' '+UD()+'.','Agree the reuse quality for each use and add a storage tank and a monitored supply line.'],'60% of treated effluent now discharged ('+fq(S.out.disch)+' '+UD()+').','Reuse on land needs agronomic checks. Cooling reuse needs hardness and TDS control.'],
+  leak:['Run a leak, overflow and valve-passing survey with a night-flow test, then fit sub-meters at the main users so that losses show up in the balance.',['Do a night-flow test with all process use stopped to find baseline leakage.','Walk every line for leaks, overflowing tanks and passing valves, and tag and repair them.','Fit sub-meters at the boiler, cooling, imbibition, distillery process and domestic lines.'],'Half of the unaccounted flow ('+fq(c.unacc)+' '+UD()+') is assumed to be leakage and overflow.','Part of the unaccounted flow is meter error. Calibrate meters before counting the saving.'],
+  wash:['Collect cane yard and floor wash water, screen and settle it, and recirculate it for washing.',['Build a screen and settling tank at the wash drain.','Add a recirculation pump and a make-up float valve.','Send the settled solids to the bagasse or compost route.'],'40% of washing water ('+fq(u.wash)+' '+UD()+') can be recirculated.','Dissolved solids build up in a closed loop and need a purge.'],
+  spray:['Fit level-controlled make-up, repair nozzles and drift eliminators and stop overflow from the spray pond.',['Replace manual make-up valves with level-controlled valves.','Repair nozzles and drift eliminators and check the spray pattern in the wind.','Stop pond overflow and route any overflow back to the basin.'],'About 8% of spray pond make-up ('+fq(u.coolS)+' '+UD()+').','Over-correcting nozzle pressure can reduce cooling. Check condenser vacuum after the work.'],
+  rwh:['Collect roof and yard runoff into a storage pond or recharge pits, with a first-flush diverter and a filter.',['Map roofs and paved yards and size storage for monsoon peaks.','Add first-flush diverters and filtration.','Connect the stored water to the raw water system and the recharge pits.'],'Annual rain on '+f(P.catch)+' m² at '+f(P.rain)+' mm and 80% runoff, averaged over 365 days ('+fq(c.rwh)+' '+UD()+').','The water arrives in the monsoon, so the benefit depends on storage volume. Treat it as a security measure.']};
+  return D[id]}
+ A.rows.forEach(function(r){if(r.a.id==='fpv')return;var d=det(r.a.id);
+  need(48);h3(r.a.t+(r.on?'  (adopted)':'  (later phase)'));
+  small('Saves '+fq(r.sv)+' '+UD()+', cost ₹'+f(r.capex)+' lakh, benefit ₹'+f(r.rs,1)+' lakh a year, payback '+pbf(r.pb)+' months.',{after:1.4});
+  para(d[0],{after:1.2});bullets(d[1]);small('**Basis of saving:** '+d[2],{after:0.8});small('**Watch point:** '+d[3],{after:3})});
+
+ /* 9.4 solar PV */
+ need(120);h2('9.4 Solar PV on the spray pond');
+ var openTot=P.pondArea*P.evapRate/1000;
+ para('Floating solar PV panels shade the water under them and cut passive evaporation, and the plant uses the power. This section sizes the system from the pond inputs and shows what it does for water and for the power bill.');
+ note('**Read this first.** Spray ponds lose most of their make-up because evaporation is how they cool. That evaporation is the cooling duty, so panels must not cover the spray zone. Panels can only reduce the passive surface evaporation from water that is not being sprayed. At '+f(P.evapRate)+' mm/day over '+f(P.pondArea)+' m2, that is '+fq(openTot)+' '+UD()+' for the whole pond, '+f(pc(openTot,S.use.coolS),1)+'% of the spray pond make-up of '+fq(S.use.coolS)+' '+UD()+'. Covering '+f(P.pvCover)+'% of the pond cuts '+fq(pv0.wd,1)+' '+UD()+'. **This is mainly a power project with a small water co-benefit.**','warn');
+ h3('Sizing and economics (inputs from the data sheet)');
+ table([{w:0.27},{w:0.26,a:'r'},{w:0.47}],[['Item','Value','Basis'],
+  ['Pond surface area',f(P.pondArea)+' m2','Input. Use the water surface outside the spray plume.'],['Share covered by PV',f(P.pvCover)+'%','Input, '+f(pv0.cm2)+' m2 under panels.'],
+  ['PV capacity',f(pv0.kwp)+' kWp',f(P.pvDens)+' kWp per 100 m2 of covered surface.'],['Annual energy',f(pv0.kwh/1000,1)+' MWh',f(P.pvYield)+' kWh per kWp a year.'],
+  ['Evaporation cut',fq(pv0.wd,1)+' '+UD()+'',f(pv0.cm2)+' m2 x '+f(P.evapRate)+' mm/day x '+f(P.pvCut)+'% cut under the panels.'],['Water saved per season',f(pv0.wy)+' m³','Over '+f(P.days)+' crushing days.'],
+  ['Value of power','₹'+f(pv0.ers,1)+' lakh/yr','₹'+f(P.tariff,1)+' per kWh.'],['Value of water','₹'+f(pv0.wrs,2)+' lakh/yr','₹'+f(P.cost)+' per m³.'],
+  ['Installed cost','₹'+f(pv0.capex)+' lakh','₹'+f(P.pvCapex)+' per kWp, indicative. Replace with quotations.'],['Simple payback',pbf(pv0.pb)+' months ('+(isFinite(pv0.pb)?f(pv0.pb/12,1):'-')+' years)','Cost / (value of power + value of water).'],
+  ['Power as a share of benefit',f(pc(pv0.ers,pv0.rs))+'%','Water is a minor part of the case.']],{fs:8.2});
+ h3('Sensitivity to coverage');
+ var sens=[['Pond covered','Panel area, m2','Capacity, kWp','Energy, MWh/yr','Water, '+UD(),'Cost, ₹ lakh','Benefit, ₹ lakh/yr','Payback, months']];
+ [20,30,40,50,60].forEach(function(cv){var q=pvCalc({cover:cv});sens.push([cv+'%',f(q.cm2),f(q.kwp),f(q.kwh/1000,1),fq(q.wd,1),f(q.capex),f(q.rs,1),pbf(q.pb)])});
+ table([{w:0.12},{w:0.13,a:'r'},{w:0.12,a:'r'},{w:0.13,a:'r'},{w:0.12,a:'r'},{w:0.1,a:'r'},{w:0.14,a:'r'},{w:0.14,a:'r'}],sens,{fs:7.8});
+ small('Payback barely changes with coverage because cost, energy and water all scale with panel area. The decision turns on the power price and the installed cost, as the next table shows.');
+ var s2=[['Value of solar power, ₹/kWh'],['Payback at '+f(P.pvCover)+'% cover, months']];
+ [5,6,7,8].forEach(function(tf){s2[0].push(f(tf,1));s2[1].push(pbf(pvCalc({tariff:tf}).pb))});
+ table([{w:0.36},{w:0.16,a:'r'},{w:0.16,a:'r'},{w:0.16,a:'r'},{w:0.16,a:'r'}],s2,{fs:8.2});
+ h3('Where panels save more water');
+ var resA=P.storage/4,rv=pvCalc({area:resA,days:365,rate:5}),pvR=resA*P.pvCover/100*P.pvDens/100;
+ table([{w:0.27},{w:0.13,a:'r'},{w:0.2},{w:0.14,a:'r'},{w:0.14,a:'r'},{w:0.12,a:'r'}],[['Site','Water area, m2','Evaporation basis','Water saved, '+UD(),'Water saved, m³/yr','Capacity, kWp'],
+  ['Spray pond, outside the spray zone',f(P.pondArea),f(P.evapRate)+' mm/day for '+f(P.days)+' days',fq(pv0.wd,1),f(pv0.wy),f(pv0.kwp)],['Raw water storage reservoir (to evaluate)',f(resA),'5 mm/day average for 365 days',fq(rv.wd,1),f(rv.wy),f(pvR)]],{fs:7.8});
+ small('The reservoir row assumes the '+f(P.storage)+' m³ store is 4 m deep, which gives '+f(resA)+' m2 of surface, and the same cover share and evaporation cut. Evaporation from stored raw water is pure loss, and it counts towards the 15-day storage target, so the reservoir can be a better first site for the water benefit. Confirm the real reservoir area and depth before using these figures.');
+ h3('Design and operating checks before approval');
+ bullets(['**Cooling duty.** Confirm with the cooling model and a condenser vacuum check that the panel layout leaves the spray zone and its air path open. Keep panels outside the plume and downwind drift area.',
+  '**Drift fouling.** Spray drift from sugar plants carries scale and organic matter. Plan panel cleaning and use frames and floats rated for cooling water chemistry and biocides.',
+  '**Water level changes.** Moorings and cable slack must handle level swings between season and off-season. Anchor for wind, and keep a clear maintenance walkway.',
+  '**Electrical.** Locate inverters on the bank, with earthing, lightning protection and isolation for pond workers. Agree the connection with the DISCOM and the electrical inspectorate.',
+  '**Power use.** The mill runs on cogeneration in season, so most solar power may be used off-season or exported. Check the export terms before sizing.',
+  '**Water quality.** Shading changes algae growth and temperature. Monitor pond water chemistry for the first season.',
+  '**Cost basis.** The installed cost is indicative. Get quotations that include floats, moorings, cabling and cleaning.']);
+ small('Indicative emissions benefit: about '+f(pv0.kwh/1000*0.71)+' tonnes of CO2 a year at a grid factor near 0.71 t/MWh. Confirm the current grid factor before reporting it.');
+
+ /* 9.5 roadmap */
+ need(80);h2('9.5 Implementation roadmap');
+ table([{w:0.13},{w:0.14},{w:0.29},{w:0.26},{w:0.18}],[['Phase','Timing','Measures','Output','Owner'],
+  ['1. Quick wins','0 to 3 months, before the season','Leak and overflow survey, sub-meters, condensate rerouting, blowdown conductivity control, ETP exceedance fixes, drought plan','Balance closing within 5%, condensate reuse above 85%, COC at target, ETP in compliance','Utilities head, EHS manager'],
+  ['2. Core recovery','3 to 9 months','Evaporator condensate reuse, ETP polishing and reuse, wash water loop, spray pond make-up control, rainwater harvesting before the monsoon','Recovered share at or above target, treated effluent discharge near zero','Distillery manager, Engineering'],
+  ['3. Capital and security','9 to 18 months','Solar PV study then tender, storage expansion or evaporation cover on the reservoir, grower drip programme, online monitoring connected','Storage cover above 15 days, solar power commissioned, sugar-side fresh water heading to target','Plant head, Engineering, Cane development']],{fs:7.8,pad:2});
+ h3('Indicators to track monthly');
+ table([{w:0.5},{w:0.25,a:'r'},{w:0.25,a:'r'}],[['Indicator','Today','Target'],['Sugar fresh water, L/tcc',f(c.lpt),f(TG.sugar)],['Distillery fresh water, KL/KL',f(c.kk,1),f(TG.dist,1)],['Recovered share of use, %',f(c.recycle),f(TG.recycle)],['Balance closure error, %',f(clos,1),'5 or less'],['Cooling tower cycles',f(P.coc,1),f(P.cocT,1)],['Raw water storage, days',f(c.days,1),'15 or more'],['Effluent readings within limit',c.ef.pass+' of '+c.ef.tot,'All'],['Checklist score, %',cl.answered?f(cl.score):'-','80 or more']]);
+
+ /* ================= 10 ASSUMPTIONS ================= */
+ need(90);h1('10. Assumptions and limitations');
+ var asm=[];
+ if(!S.edited)asm.push('All figures in this report are example plant data. They illustrate the method and are not measurements.');
+ asm=asm.concat(['Flows are season-average daily values. Peak days and the off-season are not modelled.','Fresh water is split between sugar and distillery by the distillery share entered, not by metering.','The allocation of recovered water to each use point in the diagram is assumed (section 4.2).',
+  'Saving fractions for effluent reuse (60%), leakage (50%), wash water (40%) and spray pond make-up (8%) are planning assumptions to be replaced by measurements.','Costs other than solar PV are the values entered in the tool. Solar cost, yield, evaporation rate and cut under panels are indicative inputs.',
+  'Effluent limits and fresh-water targets are indicative. The Consent to Operate and the regulator\'s standards govern.','The water security index is a screening score, not a prediction of supply.','The savings of separate measures overlap, so combined totals are an upper estimate.']);
+ bullets(asm);
+ h3('To make this a real audit');
+ bullets(['Use metered or logged values for a representative day in the crushing season, and note the date and instrument source.','Fit sub-meters at the five largest users and the distillery intake so the balance and the intensity indicators stop relying on assumptions.','Replace the limits with those in the Consent to Operate and attach the latest accredited lab reports.','Collect supplier quotations for the measures and update capital costs and paybacks.']);
+
+ need(110);h1('Appendix A. Calculation methods');
+ table([{w:0.26},{w:0.74}],[['Quantity','Method'],
+  ['Fresh intake','River, canal and reservoir + groundwater + harvested rain + municipal or other.'],['Water in','Fresh intake + recovered water (cane condensate, treated effluent and evaporator condensate reused).'],
+  ['Unaccounted flow','Water in - use in sugar house, distillery and domestic - treated effluent discharged - change in storage.'],['Closure error','Unaccounted flow / water in x 100.'],
+  ['Sugar fresh water','Fresh intake x (1 - distillery share) x 1000 / tonnes of cane per day, in L/tcc.'],['Distillery fresh water','Fresh intake x distillery share / KL of ethanol per day, in KL/KL.'],
+  ['Recovered share of use','Recovered water / total use x 100.'],['Storage cover','Raw water storage in m3 / fresh intake in '+UDt()+'.'],
+  ['Cooling tower make-up','Make-up = evaporation x C / (C - 1), where C is the cycles of concentration. Saving = make-up x (1 - ratio of the two C / (C - 1) terms).'],
+  ['Rainwater potential','Catchment m2 x annual rain in mm / 1000 x 0.8 runoff / 365, in '+UDt()+'.'],['PV evaporation saving','Pond area x share covered x evaporation rate in mm/day / 1000 x cut under panels, in '+UDt()+'.'],
+  ['PV capacity and energy','Covered area x kWp per 100 m2 / 100. Energy = kWp x annual yield in kWh/kWp.'],['Payback','Capital cost / (value of water saved + value of power) x 12, in months.'],
+  ['Water security index','Weights: source diversity 15, storage autonomy 20, groundwater reliance 10, recovered share 15, permit headroom 10, rainwater 5, metering 10, drought reliability 15. Each factor is scored 0 to 100 and weighted.'],
+  ['Checklist score','(compliant + 0.5 x partial) / (compliant + partial + not in place) x 100.']],{fs:8});
+
+ /* ================= contents page, headers and footers ================= */
+ var nPages=doc.getNumberOfPages();
+ doc.setPage(tocPage);land=false;curW=210;
+ fnt(1,20);col(K.acc);doc.text('Contents',18,28);var ty=40;
+ toc.forEach(function(e){if(ty>270)return;var l0=e[0]===0;if(l0)ty+=1.6;fnt(l0,l0?10.4:9);col(l0?K.ink:K.muted);var x=18+(l0?0:5),tt=Tx(e[1]);doc.text(tt,x,ty);var tw=doc.getTextWidth(tt);
+  doc.text(String(e[2]),192,ty,{align:'right'});
+  if(!l0){stroke(K.line);doc.setLineDashPattern([0.2,1.1],0);doc.setLineWidth(0.25);doc.line(x+tw+2,ty-0.6,186,ty-0.6);doc.setLineDashPattern([],0)}
+  ty+=l0?6.2:5});
+ for(var i=2;i<=nPages;i++){doc.setPage(i);var pw=doc.internal.pageSize.getWidth(),ph=doc.internal.pageSize.getHeight(),m=pw>250?12:18;
+  stroke(K.line);doc.setLineWidth(0.15);doc.line(m,13,pw-m,13);fnt(0,8);col(K.muted);doc.text(Tx('Water audit report  |  '+NAME+'  |  season '+S.plant.season),m,10.5);doc.text('Page '+i+' of '+nPages,pw-m,10.5,{align:'right'});
+  if(!S.edited)doc.text('Example plant data. Replace with measured values before relying on any figure.',m,ph-7)}
+ return doc;
+}
+
+function reportFileName(){
+ var n=(S.plant.name||'plant').replace(/[^A-Za-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40)||'plant';
+ return 'Water-Audit-Report-'+n+'-'+String(S.plant.season||'').replace(/[^A-Za-z0-9]+/g,'-')+'.pdf';
+}
+if(window.__WA_TEST)window.__WA_TEST.build=buildReport;
+$('#btnPdf').addEventListener('click',async function(){
+ var m=$('#pdfMsg'),b=this;m.textContent='Building the report...';b.disabled=true;
+ try{
+  var buf=buildReport().output('arraybuffer');
+  var dl=window.claude&&window.claude.use?await window.claude.use('downloads'):null;
+  if(!dl){m.textContent='Saving files is not available in this view. Open the artifact in claude.ai, or copy the text report below.';return}
+  var r=await dl.save({filename:reportFileName(),data:buf});
+  m.textContent=r&&r.status==='saved'?'Report saved.':'Report sent.';
+ }catch(e){m.textContent=e&&e.code==='declined'?'Save cancelled.':'Could not save the report: '+((e&&e.message)||e)}
+ finally{b.disabled=false}
+});
+
+/* ================= Simulation of the whole-plant process diagram ================= */
+var SIM={v:null,base:null,play:true};
+function simDefs(){
+ var B=S,R=B.rec;
+ return [
+  {k:'cond',n:'Cane condensate reused',u:'m³/day',min:0,max:Math.max(R.condGen,R.condReuse),base:R.condReuse},
+  {k:'mee',n:'Evaporator condensate reused',u:'m³/day',min:0,max:Math.max(R.meeGen,R.meeReuse),base:R.meeReuse},
+  {k:'etp',n:'Treated effluent reused',u:'m³/day',min:0,max:Math.max(R.etpGen,R.etpReuse),base:R.etpReuse},
+  {k:'coc',n:'Distillery cooling tower cycles',u:'cycles',min:2,max:8,base:B.plant.coc,d:1},
+  {k:'leak',n:'Leaks and overflows fixed',u:'%',min:0,max:100,base:0},
+  {k:'wash',n:'Wash water recirculated',u:'%',min:0,max:60,base:0},
+  {k:'spray',n:'Spray pond losses fixed',u:'%',min:0,max:100,base:0}
+ ];
+}
+function simRun(v){
+ var cB=calc(),Sx=clone(S),u=S.use;
+ Sx.rec.condReuse=v.cond;Sx.rec.meeReuse=v.mee;Sx.rec.etpReuse=v.etp;
+ var c1=S.plant.coc,c2=v.coc;Sx.plant.coc=c2;
+ if(c1>1&&c2>1)Sx.use.dCool=u.dCool*((c2/(c2-1))/(c1/(c1-1)));
+ Sx.use.wash=u.wash*(1-v.wash/100);
+ Sx.use.coolS=u.coolS*(1-0.08*v.spray/100);
+ Sx.out.disch=Math.max(0,S.out.disch-(v.etp-S.rec.etpReuse));
+ var unaccX=Math.max(0,cB.unacc)*(1-0.5*v.leak/100)+Math.min(0,cB.unacc);
+ var usesX=0;for(var k in Sx.use)usesX+=Sx.use[k];
+ var need=usesX+Sx.out.disch+S.out.stor+unaccX-(v.cond+v.mee+v.etp);
+ var delta=need-cB.fresh;
+ if(delta>=0)Sx.src.river+=delta;
+ else{var rem=-delta;['river','ground','muni'].forEach(function(k){var t=Math.min(Sx.src[k],rem);Sx.src[k]-=t;rem-=t})}
+ var keep=S,cX,svg;S=Sx;
+ try{cX=calc();svg=renderDiagram(cX,true)}finally{S=keep}
+ return {B:cB,X:cX,svg:svg};
+}
+function simVals(){var o={};simDefs().forEach(function(d){o[d.k]=SIM.v&&SIM.v[d.k]!=null?SIM.v[d.k]:d.base});return o}
+function simKpis(r){
+ var B=r.B,X=r.X,T=S.tg,P=S.plant,klp=P.klpd>0;
+ var rows=[['Fresh water intake','m³/day',B.fresh,X.fresh,0,-1],['Sugar-side fresh water','L/tcc',B.lpt,X.lpt,0,-1]];
+ if(klp)rows.push(['Distillery fresh water','KL/KL',B.kk,X.kk,1,-1]);
+ rows.push(['Recovered share of use','%',B.recycle,X.recycle,0,1],['Raw water storage cover','days',B.days,X.days,1,1],['Unaccounted flow','m³/day',Math.max(0,B.unacc),Math.max(0,X.unacc),0,-1],['Water security index','of 100',B.secTotal,X.secTotal,0,1]);
+ var h='<div class="tw"><table><thead><tr><th>Indicator</th><th class="n">Today</th><th class="n">Scenario</th><th class="n">Change</th></tr></thead><tbody>';
+ rows.forEach(function(q){var fl=q[1]==='m³/day',ff=fl?fq:f,d=q[3]-q[2],dd=q[4],good=Math.abs(d)<Math.pow(10,-dd)/2?'':((d*q[5]>0)?'good':'crit');
+  h+='<tr><td>'+q[0]+' <span class="muted small">'+(fl?UD():q[1])+'</span></td><td class="n">'+ff(q[2],dd)+'</td><td class="n"><b>'+ff(q[3],dd)+'</b></td><td class="n">'+(good?'<span class="pill '+good+'">'+(d>0?'+':'−')+ff(Math.abs(d),dd)+'</span>':'<span class="muted">no change</span>')+'</td></tr>'});
+ return h+'</tbody></table></div>';
+}
+function simHead(r){
+ var P=S.plant,sv=r.B.fresh-r.X.fresh,pctv=r.B.fresh?sv/r.B.fresh*100:0,ml=sv*P.days/1000,rs=sv*P.days*P.cost/1e5;
+ if(Math.abs(sv)<0.5)return '<p class="big">No change from today</p><p class="muted">Move a slider or pick a scenario to see the plant respond.</p>';
+ return '<p class="big" style="color:var(--'+(sv>0?'good':'crit')+')">'+(sv>0?'Saves ':'Needs ')+fq(Math.abs(sv))+' '+UD()+' of fresh water</p><p class="muted">'+f(Math.abs(pctv))+'% '+(sv>0?'less':'more')+' than today. About '+f(Math.abs(ml),1)+' ML a season, worth ₹'+f(Math.abs(rs),1)+' lakh a year at ₹'+f(P.cost)+' per m³. Savings from separate levers can overlap slightly.</p>';
+}
+function simUpdate(){
+ var v=simVals(),r=simRun(v);
+ $('#simSvg').innerHTML=r.svg;
+ $('#simKpi').innerHTML=simKpis(r);
+ $('#simHead').innerHTML=simHead(r);
+ simDefs().forEach(function(d){var o=$('#sv-'+d.k);if(o)o.textContent=(d.u==='m³/day'?fq(v[d.k])+' '+UD():f(v[d.k],d.d||0)+' '+d.u)});
+}
+function simPreset(name){
+ var D=simDefs(),R=S.rec,v={};D.forEach(function(d){v[d.k]=d.base});
+ var c=calc();
+ if(name!=='today'){
+  v.cond=Math.max(v.cond,R.condGen);v.leak=100;v.coc=Math.max(v.coc,S.plant.cocT||v.coc);
+  if(name==='core'||name==='max'){v.mee=Math.max(v.mee,R.meeGen);v.etp=Math.min(Math.max(R.etpGen,R.etpReuse),R.etpReuse+0.6*S.out.disch);v.wash=40;v.spray=100}
+  if(name==='max'){v.etp=Math.max(R.etpGen,R.etpReuse);v.wash=60;v.coc=Math.max(v.coc,6)}
+ }
+ SIM.v=v;
+ D.forEach(function(d){var el=$('#sl-'+d.k);if(el)el.value=v[d.k]});
+ simUpdate();
+}
+function renderSim(c){
+ var D=simDefs();SIM.v=null;
+ var sl=D.map(function(d){return '<div class="lev"><label for="sl-'+d.k+'">'+d.n+'</label><input id="sl-'+d.k+'" type="range" min="'+d.min+'" max="'+d.max+'" step="any" value="'+d.base+'" data-k="'+d.k+'"><output id="sv-'+d.k+'" for="sl-'+d.k+'"></output></div>'}).join('');
+ $('#p-sim').innerHTML=
+ '<div class="card c5"><h2>What if the plant did more?</h2><p class="lead">Move a lever and the whole-plant diagram, the water balance and the scores redraw at once. Fresh water intake adjusts so the balance stays closed. Nothing here changes your saved data.</p>'+sl+
+ '<div class="btns" style="margin-top:14px"><button type="button" data-preset="today">Today</button><button type="button" data-preset="quick">Quick wins</button><button type="button" data-preset="core">Core recovery</button><button type="button" data-preset="max">Maximum reuse</button></div>'+
+ '<p class="muted small" style="margin-top:12px">Quick wins: all cane condensate reused, leaks fixed, cooling tower at its target cycles. Core recovery adds evaporator condensate, 60% of the discharge as reused effluent, wash water recirculation and spray pond fixes.</p></div>'+
+ '<div class="card c7"><h2>Result</h2><div id="simHead" role="status"></div><div id="simKpi"></div></div>'+
+ '<div class="card c12"><div class="simbar"><h2>Whole-plant process diagram, scenario</h2><div class="btns"><button type="button" id="simPlay" aria-pressed="true">Pause flow</button></div></div>'+
+ '<div class="lg"><span><i style="background:var(--c1)"></i>Fresh water</span><span><i style="background:var(--c5)"></i>Recovered and reused</span><span><i style="background:var(--c6)"></i>Sent to treatment</span><span><i style="background:var(--c9)"></i>Outlets and losses</span></div>'+
+ '<div class="tw simhost'+(SIM.play?' anim':'')+'" id="simHost"><div id="simSvg"></div></div></div>';
+ simUpdate();
+}
+$('#p-sim').addEventListener('input',function(e){var t=e.target;if(t.dataset&&t.dataset.k){SIM.v=simVals();SIM.v[t.dataset.k]=parseFloat(t.value);simUpdate()}});
+$('#p-sim').addEventListener('click',function(e){
+ var b=e.target.closest('button');if(!b)return;
+ if(b.dataset.preset)simPreset(b.dataset.preset);
+ if(b.id==='simPlay'){SIM.play=!SIM.play;$('#simHost').classList.toggle('anim',SIM.play);b.textContent=SIM.play?'Pause flow':'Play flow';b.setAttribute('aria-pressed',SIM.play)}
+});
+try{if(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)SIM.play=false}catch(e){}
+
+function applyUnit(){
+ $$('#unitSeg button').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.unit===UNIT)});
+ $$('.unitWord').forEach(function(s){s.textContent=isL()?'litres per day':'m³ per day'});
+}
+$('#unitSeg').addEventListener('click',function(e){
+ var b=e.target.closest('button');if(!b||b.dataset.unit===UNIT)return;
+ UNIT=b.dataset.unit;try{localStorage.setItem('cane-water-unit',UNIT)}catch(x){}
+ applyUnit();renderForms();renderAll();
+});
+function initAll(){applyUnit();renderForms();renderEfTable();renderChecklist();renderAll()}
+initAll();
+var h=(location.hash||'').replace('#','');if(h&&$('#p-'+h))show(h);
+})();
+</script>
+
+</body></html>
