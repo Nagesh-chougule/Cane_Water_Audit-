@@ -152,13 +152,27 @@ td input[type=number]{width:84px}
 .lg{display:flex;flex-wrap:wrap;gap:8px 22px;margin-bottom:12px;font-size:13px}
 .lg span{display:inline-flex;align-items:center;gap:8px}
 .lg i{display:inline-block;width:26px;height:5px;border-radius:2px}
+.toast{position:fixed;bottom:24px;right:24px;z-index:9999;padding:12px 18px;border-radius:6px;font:500 13px var(--f-body);box-shadow:0 6px 22px rgba(0,0,0,0.22);transition:opacity .3s ease,transform .3s ease;opacity:0;pointer-events:none;transform:translateY(12px);max-width:420px}
+.toast.show{opacity:1;pointer-events:auto;transform:translateY(0)}
+.toast.good{background:var(--good-bg);color:var(--good);border:1px solid var(--good)}
+.toast.warn{background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn)}
+.toast.crit{background:var(--crit-bg);color:var(--crit);border:1px solid var(--crit)}
 </style>
 
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
 <div class="wrap">
 <header class="top">
   <div class="brandrow">
     <div><h1>Cane Water Audit</h1><div class="sub" id="plantline"></div></div>
-    <div class="btns"><span class="seg" id="unitSeg" role="group" aria-label="Flow unit"><button type="button" data-unit="m">m³/day</button><button type="button" data-unit="L">L/day</button></span><span class="tag" id="exTag">Example data. Overwrite with your plant's readings.</span><button id="btnEx" type="button">Load example</button><button id="btnBlank" type="button">Start blank</button></div>
+    <div class="btns">
+      <span class="seg" id="unitSeg" role="group" aria-label="Flow unit"><button type="button" data-unit="m">m³/day</button><button type="button" data-unit="L">L/day</button></span>
+      <span class="tag" id="exTag">Example data. Overwrite with your plant's readings.</span>
+      <button id="btnUploadXlsx" type="button" title="Upload and import data from an Excel (.xlsx) file">Upload Excel</button>
+      <input type="file" id="fileXlsx" accept=".xlsx, .xls" style="display:none">
+      <button id="btnExportXlsx" type="button" class="primary" title="Export all audit inputs and calculated results to Excel (.xlsx)">Download Excel</button>
+      <button id="btnEx" type="button">Load example</button>
+      <button id="btnBlank" type="button">Start blank</button>
+    </div>
   </div>
   <nav id="tabs" role="tablist" aria-label="Audit sections">
     <button role="tab" data-tab="overview" aria-selected="true" type="button">Overview</button>
@@ -220,7 +234,11 @@ td input[type=number]{width:84px}
   <div class="card c12">
     <h2>Audit report</h2>
     <p class="lead">A detailed PDF report with the process diagram, action plan and solar PV study, built live from the data you have entered, or a plain-text summary to copy.</p>
-    <div class="btns" style="margin-bottom:10px"><button class="primary" id="btnPdf" type="button">Download PDF report</button><span class="ok" id="pdfMsg" role="status"></span></div>
+    <div class="btns" style="margin-bottom:10px">
+      <button class="primary" id="btnPdf" type="button">Download PDF report</button>
+      <button class="primary" id="btnPdfReportXlsx" type="button">Download Excel (.xlsx)</button>
+      <span class="ok" id="pdfMsg" role="status"></span>
+    </div>
     <div class="btns" style="margin-bottom:10px"><button class="primary" id="btnCopy" type="button">Copy report</button><span class="ok" id="copyMsg" role="status"></span></div>
     <textarea id="repText" readonly aria-label="Audit report text"></textarea>
   </div>
@@ -229,6 +247,7 @@ td input[type=number]{width:84px}
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/jspdf@4.2.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
 (function(){
 'use strict';
@@ -1309,12 +1328,34 @@ $('#btnPdf').addEventListener('click',async function(){
  var m=$('#pdfMsg'),b=this;m.textContent='Building the report...';b.disabled=true;
  try{
   var buf=buildReport().output('arraybuffer');
-  var dl=window.claude&&window.claude.use?await window.claude.use('downloads'):null;
-  if(!dl){m.textContent='Saving files is not available in this view. Open the artifact in claude.ai, or copy the text report below.';return}
-  var r=await dl.save({filename:reportFileName(),data:buf});
-  m.textContent=r&&r.status==='saved'?'Report saved.':'Report sent.';
- }catch(e){m.textContent=e&&e.code==='declined'?'Save cancelled.':'Could not save the report: '+((e&&e.message)||e)}
- finally{b.disabled=false}
+  var saved=false;
+  try{
+   if(window.claude&&window.claude.use){
+    var dl=await window.claude.use('downloads');
+    if(dl){
+     var r=await dl.save({filename:reportFileName(),data:buf});
+     m.textContent=r&&r.status==='saved'?'Report saved.':'Report sent.';
+     saved=true;
+    }
+   }
+  }catch(ce){}
+  if(!saved){
+   var blob=new Blob([buf],{type:'application/pdf'});
+   var url=URL.createObjectURL(blob);
+   var a=document.createElement('a');
+   a.href=url;
+   a.download=reportFileName();
+   document.body.appendChild(a);
+   a.click();
+   document.body.removeChild(a);
+   setTimeout(function(){URL.revokeObjectURL(url)},2000);
+   m.textContent='Report downloaded.';
+   showToast('PDF report downloaded successfully.', 'good');
+  }
+ }catch(e){
+  m.textContent=e&&e.code==='declined'?'Save cancelled.':'Could not save the report: '+((e&&e.message)||e);
+  showToast('PDF download failed: '+((e&&e.message)||e), 'crit');
+ }finally{b.disabled=false}
 });
 
 /* ================= Simulation of the whole-plant process diagram ================= */
@@ -1404,6 +1445,492 @@ $('#p-sim').addEventListener('click',function(e){
  if(b.id==='simPlay'){SIM.play=!SIM.play;$('#simHost').classList.toggle('anim',SIM.play);b.textContent=SIM.play?'Pause flow':'Play flow';b.setAttribute('aria-pressed',SIM.play)}
 });
 try{if(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)SIM.play=false}catch(e){}
+
+/* ================= Toast Notification & Excel Import/Export ================= */
+function showToast(msg, type, duration) {
+ var t = $('#toast');
+ if (!t) return;
+ t.textContent = msg;
+ t.className = 'toast show ' + (type || 'good');
+ clearTimeout(t._timer);
+ t._timer = setTimeout(function(){ t.className = 'toast'; }, duration || 4000);
+}
+
+function excelFileName(){
+ var n=(S.plant.name||'plant').replace(/[^A-Za-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40)||'plant';
+ var s=String(S.plant.season||'').replace(/[^A-Za-z0-9]+/g,'-').replace(/^-|-$/g,'')||'season';
+ return 'Cane-Water-Audit-Data-'+n+'-'+s+'.xlsx';
+}
+
+var ACT_WATCH = {
+ cond: 'Sugar carry-over causes boiler foaming and scale. Keep a divert path and test every shift in the first season.',
+ coc: 'Scaling and corrosion rise with cycles, and chemical cost rises with them.',
+ mee: 'Volatile acids and COD can foul the cooling system. Do not bypass the quality check.',
+ etp: 'Reuse on land needs agronomic checks. Cooling reuse needs hardness and TDS control.',
+ leak: 'Part of the unaccounted flow is meter error. Calibrate meters before counting the saving.',
+ wash: 'Dissolved solids build up in a closed loop and need a purge.',
+ spray: 'Over-correcting nozzle pressure can reduce cooling. Check condenser vacuum after the work.',
+ rwh: 'The water arrives in the monsoon, so the benefit depends on storage volume. Treat it as a security measure.',
+ fpv: 'Floating panels must stay outside the spray plume. Check condenser vacuum and anchor moorings.'
+};
+
+function autoCols(ws, minW) {
+ var ref = ws['!ref'] || 'A1:A1';
+ var range = XLSX.utils.decode_range(ref);
+ var cols = [];
+ for (var C = range.s.c; C <= range.e.c; ++C) {
+  var maxL = minW || 12;
+  for (var R = range.s.r; R <= range.e.r; ++R) {
+   var cell = ws[XLSX.utils.encode_cell({c: C, r: R})];
+   if (cell && cell.v != null) {
+    var str = String(cell.v);
+    if (str.length > maxL && str.length < 65) maxL = str.length;
+   }
+  }
+  cols.push({ wch: maxL + 2 });
+ }
+ ws['!cols'] = cols;
+}
+
+function buildExcelPlantFlowSheet(C) {
+ var rows = [];
+ rows.push(['CANE WATER AUDIT - PLANT & FLOW DATA INPUTS']);
+ rows.push(['Plant:', S.plant.name || '', 'Season:', S.plant.season || '', 'Active Unit:', UD(), 'Exported:', new Date().toLocaleString('en-GB')]);
+ rows.push([]);
+ rows.push(['Category', 'Parameter Name', 'Parameter Key', 'Value', 'Unit', 'Notes / Options']);
+
+ GROUPS.forEach(function(g) {
+  g.r.forEach(function(r) {
+   var p = r[0], name = r[1], rawVal = get(p), unit = r[2] || '', val = rawVal, note = '';
+   if (r[3] === 'sel') {
+    var opt = r[4].find(function(o){ return String(o[0]) === String(rawVal); });
+    note = opt ? opt[1] : '';
+   }
+   if (unit === 'm³/day') {
+    if (isL()) { val = Math.round(rawVal * 1000); unit = 'L/day'; }
+    else { val = rawVal; unit = 'm³/day'; }
+   }
+   rows.push([g.t, name, p, val != null ? val : '', unit, note]);
+  });
+ });
+ rows.push(['Security & Risk', 'Drought stress applied to fresh supply', 'stress', S.stress, '%', 'Percent reduction in drought stress test']);
+ var ws = XLSX.utils.aoa_to_sheet(rows);
+ autoCols(ws, 15);
+ return ws;
+}
+
+function buildExcelWaterBalanceSheet(C) {
+ var P = S.plant, TG = S.tg, c = C, rows = [];
+ rows.push(['CANE WATER AUDIT - WATER BALANCE SUMMARY']);
+ rows.push(['Plant:', P.name || '', 'Season:', P.season || '', 'Flow Unit:', UD(), 'Exported:', new Date().toLocaleString('en-GB')]);
+ rows.push([]);
+ rows.push(['Section', 'Item / Indicator', 'Flow / Value', 'Unit', 'Share / Benchmark', 'Compliance / Status']);
+
+ var fqv = function(n) { return isL() ? Math.round(n * 1000) : Number(Number(n).toFixed(2)); };
+ var pcVal = function(a, b) { return b ? ((a / b) * 100).toFixed(1) + '%' : '0%'; };
+
+ rows.push(['1. WATER IN (INFLOW)', 'River, canal or reservoir', fqv(S.src.river), UD(), pcVal(S.src.river, c.fresh) + ' of fresh intake', '']);
+ rows.push(['1. WATER IN (INFLOW)', 'Groundwater (borewells)', fqv(S.src.ground), UD(), pcVal(S.src.ground, c.fresh) + ' of fresh intake', '']);
+ rows.push(['1. WATER IN (INFLOW)', 'Harvested rainwater', fqv(S.src.rain), UD(), pcVal(S.src.rain, c.fresh) + ' of fresh intake', '']);
+ rows.push(['1. WATER IN (INFLOW)', 'Municipal or tanker', fqv(S.src.muni), UD(), pcVal(S.src.muni, c.fresh) + ' of fresh intake', '']);
+ rows.push(['1. WATER IN (INFLOW)', 'TOTAL FRESH WATER INTAKE', fqv(c.fresh), UD(), '100% of fresh intake', c.permitUse <= 90 ? 'Within permit (' + f(c.permitUse) + '%)' : 'High permit use (' + f(c.permitUse) + '%)']);
+ rows.push(['1. WATER IN (INFLOW)', 'Recovered cane condensate reused', fqv(S.rec.condReuse), UD(), pcVal(S.rec.condReuse, S.rec.condGen) + ' of gen (' + fqv(S.rec.condGen) + ')', S.rec.condReuse >= S.rec.condGen ? 'Fully reused' : 'Partial reuse']);
+ rows.push(['1. WATER IN (INFLOW)', 'Treated sugar effluent reused', fqv(S.rec.etpReuse), UD(), pcVal(S.rec.etpReuse, S.rec.etpGen) + ' of gen (' + fqv(S.rec.etpGen) + ')', '']);
+ rows.push(['1. WATER IN (INFLOW)', 'Distillery evaporator condensate reused', fqv(S.rec.meeReuse), UD(), pcVal(S.rec.meeReuse, S.rec.meeGen) + ' of gen (' + fqv(S.rec.meeGen) + ')', '']);
+ rows.push(['1. WATER IN (INFLOW)', 'TOTAL RECOVERED WATER USED', fqv(c.recov), UD(), f(c.recycle) + '% of total use', c.recycle >= TG.recycle ? 'Target met (>= ' + f(TG.recycle) + '%)' : 'Below target']);
+ rows.push(['1. WATER IN (INFLOW)', 'TOTAL WATER IN (Fresh + Recovered)', fqv(c.inputs), UD(), '100% of inflow', '']);
+ rows.push([]);
+
+ rows.push(['2. WATER OUT (USE & LOSS)', 'Sugar House: Boiler make-up', fqv(S.use.boiler), UD(), pcVal(S.use.boiler, c.uses) + ' of total use', '']);
+ rows.push(['2. WATER OUT (USE & LOSS)', 'Sugar House: Imbibition & process', fqv(S.use.imb), UD(), pcVal(S.use.imb, c.uses) + ' of total use', '']);
+ rows.push(['2. WATER OUT (USE & LOSS)', 'Sugar House: Cooling & spray pond make-up', fqv(S.use.coolS), UD(), pcVal(S.use.coolS, c.uses) + ' of total use', '']);
+ rows.push(['2. WATER OUT (USE & LOSS)', 'Sugar House: Washing and cleaning', fqv(S.use.wash), UD(), pcVal(S.use.wash, c.uses) + ' of total use', '']);
+ rows.push(['2. WATER OUT (USE & LOSS)', 'SUBTOTAL SUGAR HOUSE USE', fqv(c.useS), UD(), pcVal(c.useS, c.uses) + ' of total use', '']);
+ rows.push(['2. WATER OUT (USE & LOSS)', 'Distillery: Process and mash dilution', fqv(S.use.dProc), UD(), pcVal(S.use.dProc, c.uses) + ' of total use', '']);
+ rows.push(['2. WATER OUT (USE & LOSS)', 'Distillery: Cooling tower make-up', fqv(S.use.dCool), UD(), pcVal(S.use.dCool, c.uses) + ' of total use', '']);
+ rows.push(['2. WATER OUT (USE & LOSS)', 'Distillery: DM plant and boiler', fqv(S.use.dDm), UD(), pcVal(S.use.dDm, c.uses) + ' of total use', '']);
+ rows.push(['2. WATER OUT (USE & LOSS)', 'SUBTOTAL DISTILLERY USE', fqv(c.useD), UD(), pcVal(c.useD, c.uses) + ' of total use', '']);
+ rows.push(['2. WATER OUT (USE & LOSS)', 'Domestic and green belt', fqv(S.use.dom), UD(), pcVal(S.use.dom, c.uses) + ' of total use', '']);
+ rows.push(['2. WATER OUT (USE & LOSS)', 'TOTAL WATER USED ACROSS SITE', fqv(c.uses), UD(), '100% of use', '']);
+ rows.push(['2. WATER OUT (USE & LOSS)', 'Treated effluent discharged to land/water', fqv(S.out.disch), UD(), '-', S.out.disch > 0 ? 'Discharged' : 'Zero liquid discharge']);
+ rows.push(['2. WATER OUT (USE & LOSS)', 'Storage change (+ filling / - draw)', fqv(S.out.stor), UD(), '-', '']);
+ rows.push(['2. WATER OUT (USE & LOSS)', 'TOTAL ACCOUNTED WATER OUT', fqv(c.uses + S.out.disch + S.out.stor), UD(), '-', '']);
+ rows.push([]);
+
+ var clos = Math.abs(c.closure);
+ rows.push(['3. RECONCILIATION', 'Unaccounted flow (gap / loss)', fqv(c.unacc), UD(), f(clos, 1) + '% of inflow', clos <= 5 ? 'Closes (Target <= 5%)' : clos <= 10 ? 'Loose closure' : 'Does not close']);
+ rows.push(['3. RECONCILIATION', 'Water balance closure error', f(clos, 1), '%', '<= 5%', clos <= 5 ? 'Within target' : 'Investigate meter calibration and leaks']);
+ rows.push([]);
+
+ var bd = band(c.secTotal);
+ rows.push(['4. INTENSITY & BENCHMARKS', 'Sugar-side fresh water', f(c.lpt), 'L/tcc', '<= ' + f(TG.sugar) + ' L/tcc', c.lpt <= TG.sugar ? 'Compliant' : c.lpt <= TG.sugarA ? 'Above target' : 'Alert']);
+ if (P.klpd) {
+  rows.push(['4. INTENSITY & BENCHMARKS', 'Distillery fresh water', f(c.kk, 1), 'KL/KL', '<= ' + f(TG.dist, 1) + ' KL/KL', c.kk <= TG.dist ? 'Compliant' : c.kk <= TG.distA ? 'Above target' : 'Alert']);
+  rows.push(['4. INTENSITY & BENCHMARKS', 'Spent wash generated', f(c.spent, 1), 'KL/KL', '<= ' + f(TG.spent, 1) + ' KL/KL', c.spent <= TG.spent ? 'Compliant' : 'Above target']);
+ }
+ rows.push(['4. INTENSITY & BENCHMARKS', 'Sugar effluent generated', f(c.efflLpt), 'L/tcc', '<= ' + f(TG.effl) + ' L/tcc', c.efflLpt <= TG.effl ? 'Compliant' : 'Above norm']);
+ rows.push(['4. INTENSITY & BENCHMARKS', 'Recovered water share of use', f(c.recycle), '%', '>= ' + f(TG.recycle) + '%', c.recycle >= TG.recycle ? 'Target met' : 'Below target']);
+ rows.push(['4. INTENSITY & BENCHMARKS', 'Cooling tower cycles (COC)', f(P.coc, 1), 'COC', '>= ' + f(P.cocT, 1) + ' COC', P.coc >= P.cocT ? 'Target met' : 'Below target']);
+ rows.push(['4. INTENSITY & BENCHMARKS', 'Raw water storage cover', f(c.days, 1), 'days', '>= 15 days', c.days >= 15 ? 'Adequate' : c.days >= 7 ? 'Warning' : 'Critical']);
+ rows.push(['4. INTENSITY & BENCHMARKS', 'Water security index', f(c.secTotal), 'of 100', 'Screening index', bd[1]]);
+
+ var ws = XLSX.utils.aoa_to_sheet(rows);
+ autoCols(ws, 16);
+ return ws;
+}
+
+function buildExcelEffluentSheet() {
+ var rows = [];
+ rows.push(['CANE WATER AUDIT - EFFLUENT MONITORING']);
+ rows.push(['Plant:', S.plant.name || '', 'Season:', S.plant.season || '', 'Exported:', new Date().toLocaleString('en-GB')]);
+ rows.push([]);
+ rows.push(['Parameter Name', 'Parameter Code', 'Unit', 'Sugar Limit', 'Sugar ETP Measured', 'Sugar Status', 'Distillery Limit', 'Distillery CPU Measured', 'Distillery Status', 'Corrective Guideline']);
+
+ var stMap = { none: 'No data', crit: 'Exceeds', warn: 'Near limit', good: 'Within' };
+ EFP.forEach(function(p) {
+  var e = S.ef[p.k];
+  var sSt = efSt(p, e.sv, e.sl);
+  var dSt = efSt(p, e.dv, e.dl);
+  rows.push([
+   p.n + (p.k === 'ph' ? ' (min 5.5)' : ''),
+   p.k,
+   p.u || '-',
+   e.sl !== '' ? e.sl : '',
+   e.sv !== '' ? e.sv : '',
+   stMap[sSt] || sSt,
+   e.dl !== '' ? e.dl : '',
+   e.dv !== '' ? e.dv : '',
+   stMap[dSt] || dSt,
+   EFX[p.k] || ''
+  ]);
+ });
+ var ws = XLSX.utils.aoa_to_sheet(rows);
+ autoCols(ws, 14);
+ return ws;
+}
+
+function buildExcelChecklistSheet() {
+ var rows = [];
+ rows.push(['CANE WATER AUDIT - AUDIT CHECKLIST']);
+ rows.push(['Plant:', S.plant.name || '', 'Season:', S.plant.season || '', 'Exported:', new Date().toLocaleString('en-GB')]);
+ rows.push([]);
+ rows.push(['Section', 'Item ID', 'Key Item?', 'Checklist Requirement', 'Compliance Status', 'Status Code', 'Remarks / Evidence', 'Recommended Next Step']);
+
+ CL.forEach(function(g) {
+  g.i.forEach(function(it) {
+   var itemState = S.cl[it.id] || { s: '', n: '' };
+   var code = itemState.s || '';
+   rows.push([
+    g.g,
+    it.id,
+    it.k ? 'Yes' : 'No',
+    it.t,
+    STL[code] || 'Not assessed',
+    code,
+    itemState.n || '',
+    CLSTEP[it.id] || ''
+   ]);
+  });
+ });
+ var ws = XLSX.utils.aoa_to_sheet(rows);
+ autoCols(ws, 15);
+ return ws;
+}
+
+function buildExcelActionPlanSheet(C) {
+ var P = S.plant, A = C.act, rows = [];
+ rows.push(['CANE WATER AUDIT - ACTION PLAN & ECONOMICS']);
+ rows.push(['Plant:', P.name || '', 'Season:', P.season || '', 'Flow Unit:', UD(), 'Exported:', new Date().toLocaleString('en-GB')]);
+ rows.push([]);
+ rows.push(['Measure ID', 'Measure Title', 'Area', 'Adopted in Plan', 'Daily Water Saving (' + UD() + ')', 'Seasonal Saving (ML)', 'Capital Cost (₹ Lakh)', 'Annual Benefit (₹ Lakh/yr)', 'Simple Payback (Months)', 'Description & Basis', 'Watch Point']);
+
+ var fqv = function(n) { return isL() ? Math.round(n * 1000) : Number(Number(n).toFixed(2)); };
+
+ A.rows.forEach(function(r) {
+  rows.push([
+   r.a.id,
+   r.a.t,
+   AREA[r.a.a] || r.a.a,
+   r.on ? 'Yes' : 'No',
+   fqv(r.sv),
+   f(r.yr / 1000, 1),
+   r.capex,
+   f(r.rs, 1),
+   isFinite(r.pb) ? f(r.pb, 0) : '-',
+   r.a.w,
+   ACT_WATCH[r.a.id] || ''
+  ]);
+ });
+
+ rows.push([]);
+ rows.push(['SUMMARY', 'Adopted Plan Total', '-', A.rows.filter(function(r){ return r.on; }).length + ' measures', fqv(A.adopted), f(A.adopted * P.days / 1000, 1), f(A.capex), f(A.saveRs, 1), A.saveRs > 0 ? f(A.capex / A.saveRs * 12, 0) : '-', 'Combined adopted plan', '']);
+
+ var keepS = S, allS = clone(S), cAll;
+ ACT.forEach(function(a){ allS.act[a.id] = allS.act[a.id] || { on: true, capex: a.cap }; allS.act[a.id].on = true; });
+ S = allS; try { cAll = calc(); } finally { S = keepS; }
+ var AA = cAll.act;
+ rows.push(['SUMMARY', 'All ' + ACT.length + ' Measures Total', '-', ACT.length + ' measures', fqv(AA.adopted), f(AA.adopted * P.days / 1000, 1), f(AA.capex), f(AA.saveRs, 1), AA.saveRs > 0 ? f(AA.capex / AA.saveRs * 12, 0) : '-', 'Upper potential (measures overlap slightly)', '']);
+
+ var ws = XLSX.utils.aoa_to_sheet(rows);
+ autoCols(ws, 14);
+ return ws;
+}
+
+function exportToExcel() {
+ if (!window.XLSX) {
+  showToast('Excel library (SheetJS) is not loaded. Please check your internet connection.', 'crit');
+  return;
+ }
+ try {
+  var C = calc();
+  var wb = XLSX.utils.book_new();
+
+  XLSX.utils.book_append_sheet(wb, buildExcelPlantFlowSheet(C), "Plant & Flow Data");
+  XLSX.utils.book_append_sheet(wb, buildExcelWaterBalanceSheet(C), "Water Balance Summary");
+  XLSX.utils.book_append_sheet(wb, buildExcelEffluentSheet(), "Effluent Monitoring");
+  XLSX.utils.book_append_sheet(wb, buildExcelChecklistSheet(), "Audit Checklist");
+  XLSX.utils.book_append_sheet(wb, buildExcelActionPlanSheet(C), "Action Plan");
+
+  var filename = excelFileName();
+  XLSX.writeFile(wb, filename);
+  showToast('Exported audit data to ' + filename, 'good');
+ } catch (err) {
+  console.error(err);
+  showToast('Export to Excel failed: ' + ((err && err.message) || err), 'crit');
+ }
+}
+
+function importFromExcel(wb) {
+ var countUpdated = 0;
+ var sheets = wb.SheetNames;
+ if (!sheets || !sheets.length) throw new Error('No worksheets found in uploaded file.');
+
+ function getSheet(pattern) {
+  var re = new RegExp(pattern, 'i');
+  for (var i = 0; i < sheets.length; i++) {
+   if (re.test(sheets[i])) return wb.Sheets[sheets[i]];
+  }
+  return null;
+ }
+
+ var wsPlant = getSheet('Plant') || wb.Sheets[sheets[0]];
+ if (wsPlant) {
+  var data = XLSX.utils.sheet_to_json(wsPlant, { header: 1 });
+  var headerIdx = -1, colKey = -1, colVal = -1, colUnit = -1, colName = -1;
+  for (var r = 0; r < Math.min(10, data.length); r++) {
+   var row = data[r];
+   if (!Array.isArray(row)) continue;
+   for (var c = 0; c < row.length; c++) {
+    var str = String(row[c] || '').toLowerCase().trim();
+    if (str === 'parameter key' || str === 'key') colKey = c;
+    if (str === 'value' || str === 'input' || str === 'val') colVal = c;
+    if (str === 'unit') colUnit = c;
+    if (str === 'parameter name' || str === 'parameter' || str === 'item') colName = c;
+   }
+   if ((colKey !== -1 || colName !== -1) && colVal !== -1) { headerIdx = r; break; }
+  }
+
+  var nameToKey = {};
+  GROUPS.forEach(function(g) {
+   g.r.forEach(function(it) {
+    nameToKey[it[1].toLowerCase().trim()] = it[0];
+   });
+  });
+
+  if (headerIdx !== -1) {
+   for (var i = headerIdx + 1; i < data.length; i++) {
+    var row = data[i];
+    if (!Array.isArray(row) || !row.length) continue;
+    var pKey = colKey !== -1 && row[colKey] != null ? String(row[colKey]).trim() : '';
+    var pName = colName !== -1 && row[colName] != null ? String(row[colName]).toLowerCase().trim() : '';
+    if (!pKey && pName && nameToKey[pName]) pKey = nameToKey[pName];
+    if (!pKey) continue;
+
+    var rawVal = row[colVal];
+    if (rawVal === undefined || rawVal === null || rawVal === '') continue;
+    var unitStr = colUnit !== -1 && row[colUnit] != null ? String(row[colUnit]).toLowerCase().trim() : '';
+
+    if (pKey === 'plant.name' || pKey === 'plant.season' || pKey === 'dist.zld') {
+     set(pKey, String(rawVal).trim());
+     countUpdated++;
+    } else if (pKey === 'stress') {
+     var sNum = parseFloat(String(rawVal).replace(/[^0-9.-]/g, ''));
+     if (isFinite(sNum)) { S.stress = clamp(sNum, 0, 70); countUpdated++; }
+    } else {
+     var num = parseFloat(String(rawVal).replace(/[^0-9.-]/g, ''));
+     if (isFinite(num)) {
+      if (/^(l\/day|l\/d|litres?\/day|liters?\/day|l)$/i.test(unitStr)) {
+       num = num / 1000;
+      }
+      set(pKey, num);
+      countUpdated++;
+     }
+    }
+   }
+  }
+ }
+
+ var wsEff = getSheet('Effluent');
+ if (wsEff) {
+  var effData = XLSX.utils.sheet_to_json(wsEff, { header: 1 });
+  var hIdx = -1, colCode = -1, colParam = -1, colSl = -1, colSv = -1, colDl = -1, colDv = -1;
+  for (var r = 0; r < Math.min(10, effData.length); r++) {
+   var row = effData[r];
+   if (!Array.isArray(row)) continue;
+   for (var c = 0; c < row.length; c++) {
+    var str = String(row[c] || '').toLowerCase().trim();
+    if (str.indexOf('code') !== -1) colCode = c;
+    if (str.indexOf('parameter') !== -1) colParam = c;
+    if (str.indexOf('sugar limit') !== -1) colSl = c;
+    if (str.indexOf('sugar etp') !== -1 || str.indexOf('sugar measured') !== -1) colSv = c;
+    if (str.indexOf('distillery limit') !== -1) colDl = c;
+    if (str.indexOf('distillery cpu') !== -1 || str.indexOf('distillery measured') !== -1 || str.indexOf('distillery outlet') !== -1) colDv = c;
+   }
+   if (colSl !== -1 && colSv !== -1) { hIdx = r; break; }
+  }
+
+  if (hIdx !== -1) {
+   for (var i = hIdx + 1; i < effData.length; i++) {
+    var row = effData[i];
+    if (!Array.isArray(row) || !row.length) continue;
+    var code = colCode !== -1 && row[colCode] ? String(row[colCode]).toLowerCase().trim() : '';
+    if (!code && colParam !== -1 && row[colParam]) {
+     var pTxt = String(row[colParam]).toLowerCase();
+     EFP.forEach(function(p){ if (pTxt.indexOf(p.k) !== -1 || pTxt.indexOf(p.n.toLowerCase().slice(0, 3)) !== -1) code = p.k; });
+    }
+    if (code && S.ef[code]) {
+     var sl = colSl !== -1 && row[colSl] != null && row[colSl] !== '' ? parseFloat(row[colSl]) : '';
+     var sv = colSv !== -1 && row[colSv] != null && row[colSv] !== '' ? parseFloat(row[colSv]) : '';
+     var dl = colDl !== -1 && row[colDl] != null && row[colDl] !== '' ? parseFloat(row[colDl]) : '';
+     var dv = colDv !== -1 && row[colDv] != null && row[colDv] !== '' ? parseFloat(row[colDv]) : '';
+     if (sl !== '' && isFinite(sl)) S.ef[code].sl = sl;
+     if (sv !== '' && isFinite(sv)) S.ef[code].sv = sv;
+     if (dl !== '' && isFinite(dl)) S.ef[code].dl = dl;
+     if (dv !== '' && isFinite(dv)) S.ef[code].dv = dv;
+     countUpdated++;
+    }
+   }
+  }
+ }
+
+ var wsCl = getSheet('Checklist');
+ if (wsCl) {
+  var clData = XLSX.utils.sheet_to_json(wsCl, { header: 1 });
+  var hIdx = -1, colId = -1, colStatus = -1, colCode = -1, colRem = -1;
+  for (var r = 0; r < Math.min(10, clData.length); r++) {
+   var row = clData[r];
+   if (!Array.isArray(row)) continue;
+   for (var c = 0; c < row.length; c++) {
+    var str = String(row[c] || '').toLowerCase().trim();
+    if (str === 'item id' || str === 'id') colId = c;
+    if (str.indexOf('status code') !== -1 || str === 'code') colCode = c;
+    else if (str.indexOf('status') !== -1) colStatus = c;
+    if (str.indexOf('remark') !== -1 || str.indexOf('evidence') !== -1) colRem = c;
+   }
+   if (colId !== -1 && (colStatus !== -1 || colCode !== -1)) { hIdx = r; break; }
+  }
+
+  if (hIdx !== -1) {
+   for (var i = hIdx + 1; i < clData.length; i++) {
+    var row = clData[i];
+    if (!Array.isArray(row) || !row.length) continue;
+    var id = colId !== -1 && row[colId] ? String(row[colId]).toLowerCase().trim() : '';
+    if (id && S.cl[id]) {
+     var code = colCode !== -1 && row[colCode] != null ? String(row[colCode]).trim().toLowerCase() : '';
+     if (!code && colStatus !== -1 && row[colStatus] != null) {
+      var stTxt = String(row[colStatus]).toLowerCase().trim();
+      if (stTxt.indexOf('comp') !== -1 || stTxt === 'yes' || stTxt === 'y') code = 'yes';
+      else if (stTxt.indexOf('part') !== -1) code = 'part';
+      else if (stTxt.indexOf('not in') !== -1 || stTxt === 'no' || stTxt === 'n') code = 'no';
+      else if (stTxt.indexOf('app') !== -1 || stTxt === 'na') code = 'na';
+      else code = '';
+     }
+     if (['yes', 'part', 'no', 'na', ''].indexOf(code) !== -1) S.cl[id].s = code;
+     if (colRem !== -1 && row[colRem] != null) S.cl[id].n = String(row[colRem]).trim();
+     countUpdated++;
+    }
+   }
+  }
+ }
+
+ var wsAct = getSheet('Action');
+ if (wsAct) {
+  var actData = XLSX.utils.sheet_to_json(wsAct, { header: 1 });
+  var hIdx = -1, colId = -1, colAdopt = -1, colCost = -1;
+  for (var r = 0; r < Math.min(10, actData.length); r++) {
+   var row = actData[r];
+   if (!Array.isArray(row)) continue;
+   for (var c = 0; c < row.length; c++) {
+    var str = String(row[c] || '').toLowerCase().trim();
+    if (str.indexOf('measure id') !== -1 || str === 'id') colId = c;
+    if (str.indexOf('adopt') !== -1 || str === 'plan') colAdopt = c;
+    if (str.indexOf('cost') !== -1 || str.indexOf('capex') !== -1) colCost = c;
+   }
+   if (colId !== -1 && (colAdopt !== -1 || colCost !== -1)) { hIdx = r; break; }
+  }
+
+  if (hIdx !== -1) {
+   for (var i = hIdx + 1; i < actData.length; i++) {
+    var row = actData[i];
+    if (!Array.isArray(row) || !row.length) continue;
+    var id = colId !== -1 && row[colId] ? String(row[colId]).toLowerCase().trim() : '';
+    if (id && S.act[id]) {
+     if (colAdopt !== -1 && row[colAdopt] != null) {
+      var adStr = String(row[colAdopt]).toLowerCase().trim();
+      S.act[id].on = (adStr === 'yes' || adStr === 'true' || adStr === '1' || adStr === 'adopt' || adStr === 'adopted');
+     }
+     if (colCost !== -1 && row[colCost] != null && row[colCost] !== '') {
+      var costNum = parseFloat(String(row[colCost]).replace(/[^0-9.-]/g, ''));
+      if (isFinite(costNum)) S.act[id].capex = costNum;
+     }
+     countUpdated++;
+    }
+   }
+  }
+ }
+
+ if (countUpdated === 0) {
+  throw new Error('No recognized audit fields found in the workbook.');
+ }
+
+ touch();
+ initAll();
+ showToast('Excel data imported successfully! (' + (S.plant.name || 'Plant') + ')', 'good', 5000);
+}
+
+$('#btnUploadXlsx').addEventListener('click', function(){
+ var fi = $('#fileXlsx');
+ if (fi) { fi.value = ''; fi.click(); }
+});
+
+$('#fileXlsx').addEventListener('change', function(e){
+ var f = e.target.files && e.target.files[0];
+ if (!f) return;
+ if (!window.XLSX) {
+  showToast('SheetJS Excel library not available. Please verify network.', 'crit');
+  return;
+ }
+ showToast('Reading ' + f.name + '...', 'warn', 2000);
+ var reader = new FileReader();
+ reader.onload = function(evt) {
+  try {
+   var data = new Uint8Array(evt.target.result);
+   var wb = XLSX.read(data, { type: 'array' });
+   importFromExcel(wb);
+  } catch (err) {
+   console.error(err);
+   showToast('Excel import failed: ' + ((err && err.message) || err), 'crit', 6000);
+  }
+ };
+ reader.onerror = function() {
+  showToast('Could not read the uploaded file.', 'crit');
+ };
+ reader.readAsArrayBuffer(f);
+});
+
+$('#btnExportXlsx').addEventListener('click', function(){ exportToExcel(); });
+var btnRepXlsx = $('#btnPdfReportXlsx');
+if (btnRepXlsx) { btnRepXlsx.addEventListener('click', function(){ exportToExcel(); }); }
 
 function applyUnit(){
  $$('#unitSeg button').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.unit===UNIT)});
